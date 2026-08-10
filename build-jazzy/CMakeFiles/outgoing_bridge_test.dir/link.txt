@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/outgoing_bridge_test.dir/tests/outgoing_bridge_test.cpp.o CMakeFiles/outgoing_bridge_test.dir/io/gimbal/outgoing_bridge.cpp.o -o outgoing_bridge_test 

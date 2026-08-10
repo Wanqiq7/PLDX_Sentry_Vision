@@ -1,0 +1,2 @@
+com_port: /dev/gimbal
+default_bullet_speed: -1

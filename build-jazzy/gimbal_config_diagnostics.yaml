@@ -1,0 +1,2 @@
+com_port: /dev/test
+transport_diagnostics_enabled: true

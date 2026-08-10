@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/libxr_protocol_test.dir/tests/libxr_protocol_test.cpp.o -o libxr_protocol_test  third_party/libxr/libxr.a -ludev 

@@ -1,0 +1,4 @@
+com_port: /dev/test
+baudrate: 115200
+default_mode: BIG_BUFF
+default_bullet_speed: 30.5

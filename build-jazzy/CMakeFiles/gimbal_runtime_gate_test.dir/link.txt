@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/gimbal_runtime_gate_test.dir/tests/gimbal_runtime_gate_test.cpp.o CMakeFiles/gimbal_runtime_gate_test.dir/io/gimbal/gimbal_runtime_gate.cpp.o CMakeFiles/gimbal_runtime_gate_test.dir/io/gimbal/ahrs_timeline.cpp.o CMakeFiles/gimbal_runtime_gate_test.dir/io/gimbal/outgoing_bridge.cpp.o -o gimbal_runtime_gate_test 

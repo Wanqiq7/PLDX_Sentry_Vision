@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION 3.16)
+
+find_package(yaml-cpp REQUIRED)
+
+add_subdirectory(serial)
+
+# 创建目标 io
+add_library(io STATIC 
+    hikrobot/hikrobot.cpp    
+    mindvision/mindvision.cpp  
+    usbcamera/usbcamera.cpp  
+    camera.cpp
+    cboard.cpp
+    dm_imu/dm_imu.cpp
+    gimbal/gimbal.cpp
+    gimbal/gimbal_config.cpp
+    gimbal/ahrs_timeline.cpp
+    gimbal/outgoing_bridge.cpp
+    gimbal/gimbal_runtime_gate.cpp
+    gimbal/gimbal_runtime.cpp
+)
+
+# hikrobot
+target_include_directories(io PUBLIC hikrobot/include)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  target_link_directories(io PUBLIC hikrobot/lib/amd64)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  target_link_directories(io PUBLIC hikrobot/lib/arm64)
+else()
+  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}!")
+endif()
+
+# mindvision
+target_include_directories(io PUBLIC mindvision/include)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  target_link_directories(io PUBLIC mindvision/lib/amd64)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+  target_link_directories(io PUBLIC mindvision/lib/arm64)
+else()
+  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}!")
+endif()
+
+# Keep this in the plain signature because ament_target_dependencies below
+# appends its ROS libraries using the plain target_link_libraries form.
+target_link_libraries(io xr udev MvCameraControl MVSDK usb-1.0 yaml-cpp serial)
+
+################## 检查 ROS 环境 ##################
+find_package(ament_cmake QUIET)
+find_package(rclcpp QUIET)
+find_package(std_msgs QUIET)
+find_package(rosidl_typesupport_cpp QUIET)
+find_package(fastcdr QUIET)
+find_package(sp_msgs QUIET)
+find_package(pldx_vision_interfaces QUIET)
+
+# 如果找不到 ROS 环境，则跳过 ROS 相关的部分
+if(NOT ament_cmake_FOUND OR NOT rclcpp_FOUND OR NOT std_msgs_FOUND OR NOT rosidl_typesupport_cpp_FOUND OR NOT pldx_vision_interfaces_FOUND)
+    message(STATUS "ROS2 or pldx_vision_interfaces not found, skipping ROS2 IO integration.")
+else()
+    message(STATUS "ROS2 environment found, compiling ROS2-related code.")
+    
+    # 添加 ROS2 相关的文件
+    target_sources(io PRIVATE ros2/publish2nav.cpp ros2/subscribe2nav.cpp ros2/ros2.cpp)
+    if(sp_msgs_FOUND)
+      target_compile_definitions(io PUBLIC IO_HAS_SP_MSGS=1)
+    endif()
+    target_compile_definitions(io PUBLIC IO_HAS_PLDX_VISION_INTERFACES=1)
+
+    # 设置 ROS2 依赖
+    include_directories(${std_msgs_INCLUDE_DIRS})
+    ament_target_dependencies(io rclcpp std_msgs)
+    if(sp_msgs_FOUND)
+      ament_target_dependencies(io sp_msgs)
+    endif()
+    ament_target_dependencies(io pldx_vision_interfaces)
+endif()

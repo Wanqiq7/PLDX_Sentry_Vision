@@ -1,0 +1,3 @@
+[submodule "third_party/libxr"]
+	path = third_party/libxr
+	url = https://github.com/Jiu-Xiao/libxr.git

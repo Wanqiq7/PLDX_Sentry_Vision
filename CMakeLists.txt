@@ -1,0 +1,195 @@
+cmake_minimum_required(VERSION 3.16.3)
+
+project(sp_vision)
+
+include(CTest)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_BUILD_TYPE Release)
+message(STATUS "--------------------CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}--------------------")
+
+find_package(OpenCV REQUIRED)
+find_package(fmt REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(fastcdr QUIET)
+set(OpenVINO_DIR "/opt/intel/openvino_2024.6.0/runtime/cmake/")
+find_package(OpenVINO REQUIRED)
+
+include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(${OpenCV_INCLUDE_DIRS})
+include_directories(${PROJECT_SOURCE_DIR})
+
+
+add_subdirectory(tools)
+set(LIBXR_SYSTEM Linux CACHE STRING "LibXR host system" FORCE)
+set(LIBXR_DRIVER Linux CACHE STRING "LibXR host driver" FORCE)
+set(LIBXR_NO_EIGEN ON CACHE BOOL "Do not expose LibXR's bundled Eigen headers to host targets" FORCE)
+add_subdirectory(third_party/libxr EXCLUDE_FROM_ALL)
+add_subdirectory(io)
+add_subdirectory(tasks/auto_aim)
+add_subdirectory(tasks/auto_buff)
+add_subdirectory(tasks/omniperception)
+
+####################src###################
+add_executable(standard src/standard.cpp)
+add_executable(mt_standard src/mt_standard.cpp)
+add_executable(standard_mpc src/standard_mpc.cpp)
+add_executable(auto_aim_debug_mpc src/auto_aim_debug_mpc.cpp)
+add_executable(mt_auto_aim_debug src/mt_auto_aim_debug.cpp)
+add_executable(auto_buff_debug src/auto_buff_debug.cpp)
+add_executable(auto_buff_debug_mpc src/auto_buff_debug_mpc.cpp)
+add_executable(uav src/uav.cpp)
+add_executable(uav_debug src/uav_debug.cpp)
+
+target_link_libraries(standard ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(mt_standard ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(standard_mpc ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(auto_aim_debug_mpc ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(mt_auto_aim_debug ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(auto_buff_debug ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_buff tools io ${CERES_LIBRARIES})
+target_link_libraries(auto_buff_debug_mpc ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_buff tools io ${CERES_LIBRARIES})
+target_link_libraries(uav ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim auto_buff tools io)
+target_link_libraries(uav_debug ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+
+##################calibration################
+add_executable(capture calibration/capture.cpp)
+add_executable(calibrate_camera calibration/calibrate_camera.cpp)
+add_executable(calibrate_handeye calibration/calibrate_handeye.cpp)
+add_executable(calibrate_robotworld_handeye calibration/calibrate_robotworld_handeye.cpp)
+add_executable(split_video calibration/split_video.cpp)
+
+target_link_libraries(capture ${OpenCV_LIBS} fmt::fmt tools io)
+target_link_libraries(calibrate_camera ${OpenCV_LIBS} fmt::fmt yaml-cpp tools)
+target_link_libraries(calibrate_handeye ${OpenCV_LIBS} fmt::fmt yaml-cpp tools)
+target_link_libraries(calibrate_robotworld_handeye ${OpenCV_LIBS} fmt::fmt yaml-cpp tools)
+target_link_libraries(split_video ${OpenCV_LIBS} fmt::fmt tools)
+
+##################tests##################
+add_executable(auto_aim_test tests/auto_aim_test.cpp)
+add_executable(auto_buff_test tests/auto_buff_test.cpp)
+add_executable(camera_detect_test tests/camera_detect_test.cpp)
+add_executable(camera_test tests/camera_test.cpp)
+add_executable(camera_thread_test tests/camera_thread_test.cpp)
+add_executable(cboard_test tests/cboard_test.cpp)
+add_executable(fire_test tests/fire_test.cpp)
+add_executable(detector_video_test tests/detector_video_test.cpp)
+add_executable(gimbal_response_test tests/gimbal_response_test.cpp)
+add_executable(multi_usbcamera_test tests/multi_usbcamera_test.cpp)
+add_executable(usbcamera_detect_test tests/usbcamera_detect_test.cpp)
+add_executable(usbcamera_test tests/usbcamera_test.cpp)
+add_executable(handeye_test tests/handeye_test.cpp)
+add_executable(dm_test tests/dm_test.cpp)
+add_executable(minimum_vision_system tests/minimum_vision_system.cpp)
+
+target_link_libraries(auto_aim_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io auto_aim)
+target_link_libraries(auto_buff_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_buff tools io)
+target_link_libraries(camera_detect_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools auto_aim io)
+target_link_libraries(camera_test ${OpenCV_LIBS} fmt::fmt tools io)
+target_link_libraries(camera_thread_test ${OpenCV_LIBS} fmt::fmt auto_aim tools io)
+target_link_libraries(cboard_test ${OpenCV_LIBS} fmt::fmt tools io)
+target_link_libraries(fire_test ${OpenCV_LIBS} fmt::fmt tools io)
+target_link_libraries(detector_video_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools auto_aim)
+target_link_libraries(gimbal_response_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+target_link_libraries(multi_usbcamera_test ${OpenCV_LIBS} fmt::fmt tools io)
+target_link_libraries(usbcamera_detect_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io auto_aim)
+target_link_libraries(usbcamera_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+target_link_libraries(handeye_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io auto_aim)
+target_link_libraries(dm_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+target_link_libraries(minimum_vision_system ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io auto_aim)
+
+add_executable(gimbal_test tests/gimbal_test.cpp)
+target_link_libraries(gimbal_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+
+add_executable(planner_test tests/planner_test.cpp)
+target_link_libraries(planner_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+
+add_executable(planner_test_offline tests/planner_test_offline.cpp)
+target_link_libraries(planner_test_offline ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+
+add_executable(target_directive_test tests/target_directive_test.cpp)
+target_link_libraries(target_directive_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io omniperception)
+add_test(NAME target_directive_test COMMAND target_directive_test)
+
+add_executable(libxr_protocol_test tests/libxr_protocol_test.cpp)
+target_link_libraries(libxr_protocol_test Eigen3::Eigen xr)
+target_compile_options(libxr_protocol_test PRIVATE -UNDEBUG)
+add_test(NAME libxr_protocol_test COMMAND libxr_protocol_test)
+
+add_executable(ahrs_timeline_test tests/ahrs_timeline_test.cpp io/gimbal/ahrs_timeline.cpp)
+target_link_libraries(ahrs_timeline_test Eigen3::Eigen)
+target_compile_options(ahrs_timeline_test PRIVATE -UNDEBUG)
+add_test(NAME ahrs_timeline_test COMMAND ahrs_timeline_test)
+
+add_executable(outgoing_bridge_test tests/outgoing_bridge_test.cpp io/gimbal/outgoing_bridge.cpp)
+target_compile_options(outgoing_bridge_test PRIVATE -UNDEBUG)
+add_test(NAME outgoing_bridge_test COMMAND outgoing_bridge_test)
+
+add_executable(latest_value_publisher_test tests/latest_value_publisher_test.cpp)
+target_compile_options(latest_value_publisher_test PRIVATE -UNDEBUG)
+add_test(NAME latest_value_publisher_test COMMAND latest_value_publisher_test)
+
+add_executable(gimbal_runtime_gate_test
+  tests/gimbal_runtime_gate_test.cpp
+  io/gimbal/gimbal_runtime_gate.cpp
+  io/gimbal/ahrs_timeline.cpp
+  io/gimbal/outgoing_bridge.cpp)
+target_link_libraries(gimbal_runtime_gate_test Eigen3::Eigen)
+target_compile_options(gimbal_runtime_gate_test PRIVATE -UNDEBUG)
+add_test(NAME gimbal_runtime_gate_test COMMAND gimbal_runtime_gate_test)
+
+add_executable(gimbal_config_test tests/gimbal_config_test.cpp io/gimbal/gimbal_config.cpp)
+target_link_libraries(gimbal_config_test ${OpenCV_LIBS} yaml-cpp fmt::fmt tools)
+target_compile_options(gimbal_config_test PRIVATE -UNDEBUG)
+add_test(NAME gimbal_config_test COMMAND gimbal_config_test)
+
+add_executable(gimbal_command_test tests/gimbal_command_test.cpp)
+target_compile_options(gimbal_command_test PRIVATE -UNDEBUG)
+add_test(NAME gimbal_command_test COMMAND gimbal_command_test)
+
+add_executable(libxr_pty_test tests/libxr_pty_test.cpp)
+target_link_libraries(libxr_pty_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+target_compile_options(libxr_pty_test PRIVATE -UNDEBUG)
+add_test(NAME libxr_pty_test COMMAND libxr_pty_test)
+
+add_executable(libxr_cdc_smoke tests/libxr_cdc_smoke.cpp)
+target_link_libraries(libxr_cdc_smoke ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+
+# 检查 ROS 环境
+find_package(ament_cmake QUIET)
+find_package(rclcpp QUIET)
+find_package(std_msgs QUIET)
+find_package(rosidl_typesupport_cpp QUIET)
+find_package(sp_msgs QUIET)
+find_package(pldx_vision_interfaces QUIET)
+# 只有在找到 ROS 环境时才会添加 sentry 和 publish_test
+if(ament_cmake_FOUND AND rclcpp_FOUND AND std_msgs_FOUND AND rosidl_typesupport_cpp_FOUND AND pldx_vision_interfaces_FOUND)
+    # 编译 sentry 和 publish_test
+    add_executable(sentry src/sentry.cpp)
+    add_executable(sentry_bp src/sentry_bp.cpp)
+    add_executable(sentry_debug src/sentry_debug.cpp)
+    add_executable(sentry_multithread src/sentry_multithread.cpp)
+    add_executable(publish_test tests/publish_test.cpp)
+
+    target_link_libraries(sentry ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim omniperception tools io)
+    target_link_libraries(sentry_bp ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim omniperception tools io)
+    target_link_libraries(sentry_debug ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim omniperception tools io)
+    target_link_libraries(sentry_multithread ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim omniperception tools io)
+    target_link_libraries(publish_test ${OpenCV_LIBS} fmt::fmt tools io auto_aim)
+    if(sp_msgs_FOUND)
+      add_executable(subscribe_test tests/subscribe_test.cpp)
+      add_executable(topic_loop_test tests/topic_loop_test.cpp)
+      target_link_libraries(subscribe_test ${OpenCV_LIBS} fmt::fmt tools io)
+      target_link_libraries(topic_loop_test ${OpenCV_LIBS} fmt::fmt tools io)
+      target_compile_definitions(sentry PUBLIC IO_HAS_SP_MSGS=1)
+      target_compile_definitions(sentry_bp PUBLIC IO_HAS_SP_MSGS=1)
+      target_compile_definitions(sentry_debug PUBLIC IO_HAS_SP_MSGS=1)
+      target_compile_definitions(sentry_multithread PUBLIC IO_HAS_SP_MSGS=1)
+      target_compile_definitions(subscribe_test PUBLIC IO_HAS_SP_MSGS=1)
+      target_compile_definitions(topic_loop_test PUBLIC IO_HAS_SP_MSGS=1)
+    endif()
+else()
+    message(STATUS "ROS2 or pldx_vision_interfaces not found, skipping production sentry executables.")
+endif()

@@ -1,0 +1,191 @@
+Start testing: Aug 11 02:18 CST
+----------------------------------------------------------
+1/9 Testing: target_directive_test
+1/9 Test: target_directive_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/target_directive_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"target_directive_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+hard exclusion
+strict selection
+precedence inside directive
+invalid fallback
+empty queued detection
+typed timeout
+typed over legacy
+normalized ingress
+cross-boundary heartbeat
+target_directive_test passed
+<end of output>
+Test time =   0.14 sec
+----------------------------------------------------------
+Test Passed.
+"target_directive_test" end time: Aug 11 02:18 CST
+"target_directive_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/9 Testing: libxr_protocol_test
+2/9 Test: libxr_protocol_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/libxr_protocol_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"libxr_protocol_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"libxr_protocol_test" end time: Aug 11 02:18 CST
+"libxr_protocol_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/9 Testing: ahrs_timeline_test
+3/9 Test: ahrs_timeline_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/ahrs_timeline_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"ahrs_timeline_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.02 sec
+----------------------------------------------------------
+Test Passed.
+"ahrs_timeline_test" end time: Aug 11 02:18 CST
+"ahrs_timeline_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/9 Testing: outgoing_bridge_test
+4/9 Test: outgoing_bridge_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/outgoing_bridge_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"outgoing_bridge_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"outgoing_bridge_test" end time: Aug 11 02:18 CST
+"outgoing_bridge_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/9 Testing: latest_value_publisher_test
+5/9 Test: latest_value_publisher_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/latest_value_publisher_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"latest_value_publisher_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"latest_value_publisher_test" end time: Aug 11 02:18 CST
+"latest_value_publisher_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/9 Testing: gimbal_runtime_gate_test
+6/9 Test: gimbal_runtime_gate_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/gimbal_runtime_gate_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"gimbal_runtime_gate_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"gimbal_runtime_gate_test" end time: Aug 11 02:18 CST
+"gimbal_runtime_gate_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/9 Testing: gimbal_config_test
+7/9 Test: gimbal_config_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/gimbal_config_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"gimbal_config_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+[2026-08-11 02:18:14.207] [error] [Gimbal] Invalid config gimbal_config_missing.yaml: com_port is required
+[2026-08-11 02:18:14.207] [error] [Gimbal] Invalid config gimbal_config_mode.yaml: unknown default_mode: BAD
+[2026-08-11 02:18:14.207] [error] [Gimbal] Invalid config gimbal_config_baud_low.yaml: baudrate must be in 1..4000000
+[2026-08-11 02:18:14.207] [error] [Gimbal] Invalid config gimbal_config_baud_high.yaml: baudrate must be in 1..4000000
+[2026-08-11 02:18:14.207] [error] [Gimbal] Failed to parse config gimbal_config_baud_text.yaml: yaml-cpp: error at line 2, column 11: bad conversion
+[2026-08-11 02:18:14.208] [error] [Gimbal] Invalid config gimbal_config_speed.yaml: default_bullet_speed must be positive
+[2026-08-11 02:18:14.208] [error] [Gimbal] Invalid config gimbal_config_speed_negative.yaml: default_bullet_speed must be positive
+[2026-08-11 02:18:14.208] [error] [Gimbal] Failed to parse config gimbal_config_speed_text.yaml: yaml-cpp: error at line 2, column 23: bad conversion
+[2026-08-11 02:18:14.208] [error] [Gimbal] Invalid config gimbal_config_port_sequence.yaml: com_port is required
+[2026-08-11 02:18:14.208] [error] [Gimbal] Invalid config gimbal_config_port_empty.yaml: com_port must not be empty
+[2026-08-11 02:18:14.208] [error] [Gimbal] Invalid config gimbal_config_port_whitespace.yaml: com_port must not be empty
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"gimbal_config_test" end time: Aug 11 02:18 CST
+"gimbal_config_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/9 Testing: gimbal_command_test
+8/9 Test: gimbal_command_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/gimbal_command_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"gimbal_command_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"gimbal_command_test" end time: Aug 11 02:18 CST
+"gimbal_command_test" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/9 Testing: libxr_pty_test
+9/9 Test: libxr_pty_test
+Command: "/home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy/libxr_pty_test"
+Directory: /home/wanqiq/2026Sentry/PLDX_Sentry_Vision/build-jazzy
+"libxr_pty_test" start time: Aug 11 02:18 CST
+Output:
+----------------------------------------------------------
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.read_ (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/libxr_system.cpp:32) STDIO.read_: stdin is not a TTY, parking thread forever[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.write_ (Operation not permitted), retrying with default attributes.[m
+[32mP [0](./third_party/libxr/driver/linux/linux_uart.hpp:71) Open UART device: /dev/pts/1[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: rx_uart (Operation not permitted), retrying with default attributes.[m
+[33mW [1](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: tx_uart (Operation not permitted), retrying with default attributes.[m
+[2026-08-11 02:18:14.280] [info] [Gimbal] LibXR SharedTopic runtime; waiting for live gimbal feedback.
+[2026-08-11 02:18:14.330] [warning] [GimbalRuntime] Normalized AHRS quaternion with norm 2.000000
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.read_ (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/libxr_system.cpp:32) STDIO.read_: stdin is not a TTY, parking thread forever[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.write_ (Operation not permitted), retrying with default attributes.[m
+[32mP [0](./third_party/libxr/driver/linux/linux_uart.hpp:71) Open UART device: /dev/pts/1[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: rx_uart (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: tx_uart (Operation not permitted), retrying with default attributes.[m
+[2026-08-11 02:18:14.396] [info] [Gimbal] LibXR SharedTopic runtime; waiting for live gimbal feedback.
+[2026-08-11 02:18:14.446] [warning] [GimbalRuntime] Normalized AHRS quaternion with norm 2.000000
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.read_ (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/libxr_system.cpp:32) STDIO.read_: stdin is not a TTY, parking thread forever[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.write_ (Operation not permitted), retrying with default attributes.[m
+[32mP [0](./third_party/libxr/driver/linux/linux_uart.hpp:71) Open UART device: /dev/pts/1[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: rx_uart (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: tx_uart (Operation not permitted), retrying with default attributes.[m
+[2026-08-11 02:18:14.607] [info] [Gimbal] LibXR SharedTopic runtime; waiting for live gimbal feedback.
+[2026-08-11 02:18:14.657] [warning] [GimbalRuntime] Normalized AHRS quaternion with norm 2.000000
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.read_ (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: STDIO.write_ (Operation not permitted), retrying with default attributes.[m
+[32mP [0](./third_party/libxr/driver/linux/linux_uart.hpp:71) Open UART device: /dev/pts/1[m
+[33mW [0](./third_party/libxr/system/linux/libxr_system.cpp:32) STDIO.read_: stdin is not a TTY, parking thread forever[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: rx_uart (Operation not permitted), retrying with default attributes.[m
+[33mW [0](./third_party/libxr/system/linux/thread.hpp:134) Failed to create thread: tx_uart (Operation not permitted), retrying with default attributes.[m
+[2026-08-11 02:18:15.031] [info] [Gimbal] LibXR SharedTopic runtime; waiting for live gimbal feedback.
+[2026-08-11 02:18:15.081] [warning] [GimbalRuntime] Normalized AHRS quaternion with norm 2.000000
+<end of output>
+Test time =   1.21 sec
+----------------------------------------------------------
+Test Passed.
+"libxr_pty_test" end time: Aug 11 02:18 CST
+"libxr_pty_test" time elapsed: 00:00:01
+----------------------------------------------------------
+
+End testing: Aug 11 02:18 CST

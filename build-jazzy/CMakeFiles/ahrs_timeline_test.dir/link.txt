@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG CMakeFiles/ahrs_timeline_test.dir/tests/ahrs_timeline_test.cpp.o CMakeFiles/ahrs_timeline_test.dir/io/gimbal/ahrs_timeline.cpp.o -o ahrs_timeline_test 

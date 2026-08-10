@@ -1,0 +1,13 @@
+camera_name: "mindvision"
+exposure_ms: 2
+gamma: 0.5
+vid_pid: "f622:d13a"
+
+# camera_name: "hikrobot"
+# exposure_ms: 3
+# gain: 10.0
+# vid_pid: "2bdf:0001"
+com_port: "/dev/gimbal"
+baudrate: 921600
+default_mode: AUTO_AIM
+default_bullet_speed: 23.0

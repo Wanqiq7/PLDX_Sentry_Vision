@@ -133,8 +133,8 @@ public:
   }
 
   void SendPassiveFalseFire() { gate_.SubmitPassiveFalseFire(); }
-  void SendNavData(const ChassisTarget & value) { nav_topic_.Publish(value); }
-  void SendBehaviorData(const BehaviorData & value) { behavior_topic_.Publish(value); }
+  void SendNavData(const ChassisTarget & value) { auto copy = value; nav_topic_.Publish(copy); }
+  void SendBehaviorData(const BehaviorData & value) { auto copy = value; behavior_topic_.Publish(copy); }
   NavigationFeedbackSnapshot NavigationFeedback() const
   {
     std::lock_guard lock(navigation_feedback_mutex_);

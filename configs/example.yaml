@@ -47,8 +47,6 @@ max_side_ratio: 1.5
 max_rectangular_error: 25 # degree
 min_confidence: 0.8
 
-#####-----cboard参数-----#####
-
 #####-----tracker参数-----#####
 min_detect_count: 5
 max_temp_lost_count: 15
@@ -78,7 +76,9 @@ distort_coeffs: [-0.48599095566724387, 0.23999516531343185, -0.00029018466701866
 R_camera2gimbal: [0.046736929626455238, -0.055211941324114208, 0.99738021884550865, -0.99881598162461238, -0.016078770676278314, 0.0459141370909011, 0.013501639172863072, -0.99834518813322415, -0.055898041744621867]
 t_camera2gimbal: [0.27420934670256336, 0.0098763306562371159, 0.043798385984197351]
 
-com_port: "/dev/gimbal"
+transport_vid: "16d0"
+transport_pid: "1492"
+transport_control_interface: "XRUSB Vision Control"
 baudrate: 921600
 default_mode: AUTO_AIM
 default_bullet_speed: 23.0

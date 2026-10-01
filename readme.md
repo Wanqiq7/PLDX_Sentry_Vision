@@ -37,7 +37,7 @@ PLDX Sentry Vision 是面向 RoboMaster 步兵、哨兵等机器人的实时视�
 
 - **完整的视觉自瞄链路**：覆盖相机采集、识别、位姿解算、目标跟踪、轨迹规划、瞄准和开火决策。
 - **面向实时性的轨迹规划**：根据云台运动约束生成可执行目标轨迹，并结合开火延迟进行决策。
-- **模块化硬件抽象**：相机、云台、IMU、SocketCAN 和 ROS 2 接口均位于 `io/` 层。
+- **模块化硬件抽象**：相机、云台、IMU、串口和 ROS 2 接口均位于 `io/` 层。
 - **LibXR 二进制通信**：视觉端使用 `Topic::PackRaw` 发送、`Topic::Server` 接收，协议布局和关键安全行为由测试固定。
 - **故障安全**：AHRS 过期、通信恢复、非法指令和非法反馈均采用 fail-closed 策略；自动化测试不会发送真实开火。
 
@@ -103,7 +103,7 @@ cmake --build build-jazzy -j$(nproc)
 ./build-jazzy/auto_buff_debug
 ~~~
 
-运行前确认配置中的模型路径、相机参数和 `com_port` 正确。真实机器人运行前应确认发射机构处于安全状态。
+运行前确认配置中的模型路径、相机参数和 USB CDC 选择器正确。真实机器人运行前应确认发射机构处于安全状态。
 
 ### 被动 CDC 检查
 
@@ -111,7 +111,7 @@ cmake --build build-jazzy -j$(nproc)
 ./build-jazzy/libxr_cdc_smoke path/to/gimbal.yaml
 ~~~
 
-`libxr_cdc_smoke` 只接收并打印 AHRS 四元数，同时发送被动的 `fire=false` 保活，不发送目标控制包，也不会启用开火。云台设备默认使用稳定的 `/dev/gimbal` udev 别名。
+`libxr_cdc_smoke` 只接收并打印 AHRS 四元数，同时发送被动的 `fire=false` 保活，不发送目标控制包，也不会启用开火。生产云台链路通过 `16d0:1492` 和 `XRUSB Vision Control` 自动发现；PTY Mock 可继续使用 `com_port`。
 
 ## 云台通信
 
@@ -122,7 +122,7 @@ cmake --build build-jazzy -j$(nproc)
 | `target_euler` | 视觉 -> 云台 | 目标欧拉角及导数，36 字节 |
 | `fire_notify` | 视觉 -> 云台 | `isfire`，1 字节 |
 | `ahrs_quaternion` | 云台 -> 视觉 | `x,y,z,w` 四元数，16 字节 |
-| `nav_gimbal_feedback_v1` | 云台 -> 视觉 | 弹速、弹量、云台模式和射击模式，12 字节 |
+| `nav_gimbal_feedback` | 云台 -> 视觉 | 角度、角速度、弹速、弹量、云台控制模式和视觉任务，28 字节 |
 
 协议常量、字段偏移、payload 尺寸和小端约束位于 `io/gimbal/libxr_protocol.hpp`。运行时只创建一个 `LinuxUART`、一个接收 `Topic::Server` 和对应 Topic 回调。
 
@@ -131,7 +131,7 @@ cmake --build build-jazzy -j$(nproc)
 - AHRS 过期后拒绝目标和开火指令，并发送安全的 `fire=false`。
 - 非法四元数或非法云台反馈会被丢弃。
 - `control=false` 时不发送目标角，只发送被动安全火指令。
-- 不要在 `/dev/gimbal` 上附加 `LibXR::Terminal`，避免与二进制 Topic 流竞争 CDC 端点。
+- 不要在协议 CDC 上附加 `LibXR::Terminal`，避免与二进制 Topic 流竞争 CDC 端点。
 
 ### 传输诊断
 
@@ -149,13 +149,18 @@ transport_diagnostics_enabled: true
 
 | 字段 | 必填 | 默认值 | 说明 |
 | :--- | :---: | :--- | :--- |
-| `com_port` | 是 | - | 推荐 `/dev/gimbal` |
+| `transport_vid` | 否* | `16d0` | USB VID；与 PID 和控制接口名称一起启用自动发现 |
+| `transport_pid` | 否* | `1492` | USB PID；与 VID 和控制接口名称一起启用自动发现 |
+| `transport_control_interface` | 否* | `XRUSB Vision Control` | Composite CDC 的控制接口字符串 |
+| `com_port` | 否* | - | 仅用于 PTY/测试等显式设备路径；与自动发现选择器二选一 |
 | `baudrate` | 否 | `921600` | CDC 链路形式参数 |
 | `default_mode` | 否 | `AUTO_AIM` | 在线反馈优先 |
 | `default_bullet_speed` | 否 | `23.0` | 在线反馈优先 |
 | `transport_diagnostics_enabled` | 否 | `false` | 是否周期输出通信诊断 |
 
-建议通过 udev 规则将控制器绑定到 `/dev/gimbal`。配置解析会拒绝空设备路径、非法波特率、未知模式和非正弹速。
+带 `*` 的字段需在“完整 USB 选择器”与 `com_port` 显式路径之间二选一；生产配置使用前者。
+
+生产配置应使用 VID/PID/控制接口选择器；配置解析会拒绝不完整或为空的选择器、空设备路径、非法波特率、未知模式和非正弹速。
 
 ## 测试与验证
 
@@ -190,7 +195,7 @@ PLDX_Sentry_Vision/
 ├── assets/                 # 模型、演示视频和标定素材
 ├── calibration/            # 相机、手眼和机器人世界坐标标定
 ├── configs/                # 各机器人配置文件
-├── io/                     # 相机、云台、IMU、CAN 和 ROS 2 硬件抽象
+├── io/                     # 相机、云台、IMU、串口和 ROS 2 硬件抽象
 │   └── gimbal/             # LibXR 协议、运行时、时间线和安全闸门
 ├── tasks/                  # auto_aim、auto_buff、omniperception
 ├── tests/                  # 算法、协议、PTY 和硬件抽象测试

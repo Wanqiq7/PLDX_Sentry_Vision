@@ -12,13 +12,15 @@ static_assert(std::endian::native == std::endian::little, "LibXR topic payloads 
 inline constexpr char TARGET_EULER_TOPIC[] = "target_euler";
 inline constexpr char FIRE_NOTIFY_TOPIC[] = "fire_notify";
 inline constexpr char AHRS_QUATERNION_TOPIC[] = "ahrs_quaternion";
-inline constexpr char NAV_GIMBAL_FEEDBACK_TOPIC[] = "nav_gimbal_feedback_v1";
+inline constexpr char NAV_GIMBAL_FEEDBACK_TOPIC[] = "nav_gimbal_feedback";
+inline constexpr uint8_t FEEDBACK_YAW_VALID = 1U << 0U;
+inline constexpr uint8_t FEEDBACK_PITCH_VALID = 1U << 1U;
+inline constexpr uint8_t FEEDBACK_ANGULAR_VELOCITY_VALID = 1U << 2U;
 inline constexpr uint8_t FEEDBACK_BULLET_SPEED_VALID = 1U << 3U;
 inline constexpr uint8_t FEEDBACK_BULLET_COUNT_VALID = 1U << 4U;
 inline constexpr uint8_t FEEDBACK_GIMBAL_MODE_VALID = 1U << 5U;
-inline constexpr uint8_t FEEDBACK_SHOOT_MODE_VALID = 1U << 6U;
-inline constexpr uint8_t FEEDBACK_VALID_MASK = FEEDBACK_BULLET_SPEED_VALID |
-  FEEDBACK_BULLET_COUNT_VALID | FEEDBACK_GIMBAL_MODE_VALID | FEEDBACK_SHOOT_MODE_VALID;
+inline constexpr uint8_t FEEDBACK_VISION_TASK_VALID = 1U << 6U;
+inline constexpr uint8_t FEEDBACK_VALID_MASK = 0x7FU;
 inline constexpr uint8_t GIMBAL_MODE_RELAX = 0U;
 inline constexpr uint8_t GIMBAL_MODE_COMMON = 1U;
 inline constexpr uint8_t GIMBAL_MODE_AUTOPATROL = 2U;
@@ -55,10 +57,14 @@ struct QuaternionPayload
 // producer) are radians.  The topic name is part of the wire contract.
 struct [[gnu::packed]] GimbalFeedbackPayload
 {
+  float yaw = 0.0F;
+  float pitch = 0.0F;
+  float yaw_velocity = 0.0F;
+  float pitch_velocity = 0.0F;
   float bullet_speed = 0.0F;
   uint16_t bullet_count = 0;
-  uint8_t gimbal_mode = 0;  // RELAX, COMMON, AUTOPATROL, LOW_SENSITIVITY
-  uint8_t shoot_mode = 0;  // 0 PRIMARY (single 17 mm barrel), 1 RIGHT, 2 BOTH
+  uint8_t gimbal_mode = 0;
+  uint8_t vision_task = 0;
   uint8_t valid_flags = 0;
   uint8_t reserved[3] = {};
 };
@@ -66,7 +72,7 @@ struct [[gnu::packed]] GimbalFeedbackPayload
 static_assert(sizeof(TargetEulerPayload) == 36);
 static_assert(sizeof(FirePayload) == 1);
 static_assert(sizeof(QuaternionPayload) == 16);
-static_assert(sizeof(GimbalFeedbackPayload) == 12);
+static_assert(sizeof(GimbalFeedbackPayload) == 28);
 
 inline TargetEulerPayload EncodeTarget(
   float yaw, float yaw_dot, float yaw_ddot, float pit, float pit_dot, float pit_ddot)

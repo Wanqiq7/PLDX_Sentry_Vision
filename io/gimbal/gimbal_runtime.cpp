@@ -97,6 +97,11 @@ public:
     feedback_topic_.RegisterCallback(feedback_callback_);
     nav_topic_.RegisterCallback(nav_callback_);
     behavior_topic_.RegisterCallback(behavior_callback_);
+    team_topic_.RegisterCallback(team_callback_);
+    game_topic_.RegisterCallback(game_callback_);
+    online_topic_.RegisterCallback(online_callback_);
+    offline_topic_.RegisterCallback(offline_callback_);
+    radar_topic_.RegisterCallback(radar_callback_);
     server_.Register(ahrs_topic_);
     server_.Register(feedback_topic_);
     server_.Register(team_topic_);
@@ -130,6 +135,11 @@ public:
   void SendPassiveFalseFire() { gate_.SubmitPassiveFalseFire(); }
   void SendNavData(const ChassisTarget & value) { nav_topic_.Publish(value); }
   void SendBehaviorData(const BehaviorData & value) { behavior_topic_.Publish(value); }
+  NavigationFeedbackSnapshot NavigationFeedback() const
+  {
+    std::lock_guard lock(navigation_feedback_mutex_);
+    return navigation_feedback_;
+  }
 
   void WaitReady() { gate_.WaitReady(); }
 
@@ -349,6 +359,25 @@ private:
   LibXR::Topic::Callback feedback_callback_;
   LibXR::Topic::Callback nav_callback_;
   LibXR::Topic::Callback behavior_callback_;
+  LibXR::Topic::Callback team_callback_ = LibXR::Topic::Callback::Create(
+    [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) { self->CopyFeedback(message, self->navigation_feedback_.team); }, this);
+  LibXR::Topic::Callback game_callback_ = LibXR::Topic::Callback::Create(
+    [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) { self->CopyFeedback(message, self->navigation_feedback_.game); }, this);
+  LibXR::Topic::Callback online_callback_ = LibXR::Topic::Callback::Create(
+    [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) { self->CopyFeedback(message, self->navigation_feedback_.online); }, this);
+  LibXR::Topic::Callback offline_callback_ = LibXR::Topic::Callback::Create(
+    [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) { self->CopyFeedback(message, self->navigation_feedback_.offline); }, this);
+  LibXR::Topic::Callback radar_callback_ = LibXR::Topic::Callback::Create(
+    [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) { self->CopyFeedback(message, self->navigation_feedback_.radar); }, this);
+  template <typename T> void CopyFeedback(const LibXR::Topic::RawMessageView & message, T & target)
+  {
+    if (message.payload.addr_ == nullptr || message.payload.size_ != sizeof(T)) return;
+    std::lock_guard lock(navigation_feedback_mutex_);
+    std::memcpy(&target, message.payload.addr_, sizeof(T));
+    navigation_feedback_.fresh = true;
+  }
+  mutable std::mutex navigation_feedback_mutex_;
+  NavigationFeedbackSnapshot navigation_feedback_{};
   OutgoingBridge outgoing_;
   GimbalRuntimeGate gate_;
   LibXR::Semaphore rx_sem_;
@@ -403,6 +432,7 @@ Eigen::Quaterniond GimbalRuntime::WaitQuaternion(AhrsTimeline::Clock::time_point
 RuntimeSnapshot GimbalRuntime::Snapshot() const { return impl_->Snapshot(); }
 
 bool GimbalRuntime::HasFreshAhrs() const { return impl_->HasFreshAhrs(); }
+NavigationFeedbackSnapshot GimbalRuntime::NavigationFeedback() const { return impl_->NavigationFeedback(); }
 void GimbalRuntime::SendNavData(const navigation_protocol::ChassisTarget & value) { impl_->SendNavData(value); }
 void GimbalRuntime::SendBehaviorData(const navigation_protocol::BehaviorData & value) { impl_->SendBehaviorData(value); }
 }  // namespace io

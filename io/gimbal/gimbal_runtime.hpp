@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "io/gimbal/ahrs_timeline.hpp"
@@ -44,6 +45,16 @@ struct RuntimeSnapshot
   uint64_t read_failures = 0, write_failures = 0;
 };
 
+struct NavigationFeedbackSnapshot
+{
+  navigation_protocol::TeamInfo team{};
+  navigation_protocol::GameInfo game{};
+  navigation_protocol::SentryInfoOnline online{};
+  navigation_protocol::SentryInfoOffline offline{};
+  navigation_protocol::RadarInfo radar{};
+  bool fresh = false;
+};
+
 class GimbalRuntime
 {
 public:
@@ -65,6 +76,7 @@ public:
   Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested);
   [[nodiscard]] RuntimeSnapshot Snapshot() const;
   [[nodiscard]] bool HasFreshAhrs() const;
+  [[nodiscard]] NavigationFeedbackSnapshot NavigationFeedback() const;
 
 private:
   class Impl;

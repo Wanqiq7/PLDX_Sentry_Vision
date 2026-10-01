@@ -111,7 +111,7 @@ cmake --build build-jazzy -j$(nproc)
 ./build-jazzy/libxr_cdc_smoke path/to/gimbal.yaml
 ~~~
 
-`libxr_cdc_smoke` 只接收并打印 AHRS 四元数，同时发送被动的 `fire=false` 保活，不发送目标控制包，也不会启用开火。生产云台链路通过 `16d0:1492` 和 `XRUSB Vision Control` 自动发现；PTY Mock 可继续使用 `com_port`。
+`libxr_cdc_smoke` 只接收并打印 AHRS 四元数，同时发送被动的 `fire=false` 保活，不发送目标控制包，也不会启用开火。生产云台链路通过 `16d0:1492` 和 `XRUSB CDC Control` 自动发现；PTY Mock 可继续使用 `com_port`。
 
 ## 云台通信
 
@@ -151,7 +151,7 @@ transport_diagnostics_enabled: true
 | :--- | :---: | :--- | :--- |
 | `transport_vid` | 否* | `16d0` | USB VID；与 PID 和控制接口名称一起启用自动发现 |
 | `transport_pid` | 否* | `1492` | USB PID；与 VID 和控制接口名称一起启用自动发现 |
-| `transport_control_interface` | 否* | `XRUSB Vision Control` | Composite CDC 的控制接口字符串 |
+| `transport_control_interface` | 否* | `XRUSB CDC Control` | Composite CDC 的控制接口字符串 |
 | `com_port` | 否* | - | 仅用于 PTY/测试等显式设备路径；与自动发现选择器二选一 |
 | `baudrate` | 否 | `921600` | CDC 链路形式参数 |
 | `default_mode` | 否 | `AUTO_AIM` | 在线反馈优先 |

@@ -7,17 +7,16 @@ ROS2::ROS2(int argc, char ** argv)
   publish2nav_ = std::make_shared<Publish2Nav>();
 
   subscribe2nav_ = std::make_shared<Subscribe2Nav>();
-
-  publish_spin_thread_ = std::make_unique<std::thread>([this]() { publish2nav_->start(); });
-
-  subscribe_spin_thread_ = std::make_unique<std::thread>([this]() { subscribe2nav_->start(); });
+  executor_.add_node(publish2nav_);
+  executor_.add_node(subscribe2nav_);
+  spin_thread_ = std::make_unique<std::thread>([this]() { executor_.spin(); });
 }
 
 ROS2::~ROS2()
 {
   if (rclcpp::ok()) rclcpp::shutdown();
-  if (publish_spin_thread_ && publish_spin_thread_->joinable()) publish_spin_thread_->join();
-  if (subscribe_spin_thread_ && subscribe_spin_thread_->joinable()) subscribe_spin_thread_->join();
+  executor_.cancel();
+  if (spin_thread_ && spin_thread_->joinable()) spin_thread_->join();
 }
 
 bool ROS2::publish(

@@ -78,7 +78,7 @@ t_camera2gimbal: [0.27420934670256336, 0.0098763306562371159, 0.0437983859841973
 
 transport_vid: "16d0"
 transport_pid: "1492"
-transport_control_interface: "XRUSB Vision Control"
+transport_control_interface: "XRUSB CDC Control"
 baudrate: 921600
 default_mode: AUTO_AIM
 default_bullet_speed: 23.0

@@ -73,7 +73,7 @@ t_camera2gimbal: [0.094969301833534511, 0.095006290298006682, 0.0509870662917566
 #####-----gimbal参数-----#####
 transport_vid: "16d0"
 transport_pid: "1492"
-transport_control_interface: "XRUSB Vision Control"
+transport_control_interface: "XRUSB CDC Control"
 baudrate: 921600
 default_mode: AUTO_AIM
 default_bullet_speed: 23.0

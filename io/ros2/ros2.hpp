@@ -3,6 +3,7 @@
 
 #include "publish2nav.hpp"
 #include "subscribe2nav.hpp"
+#include "rclcpp/executors/multi_threaded_executor.hpp"
 
 namespace io
 {
@@ -41,9 +42,8 @@ public:
 private:
   std::shared_ptr<Publish2Nav> publish2nav_;
   std::shared_ptr<Subscribe2Nav> subscribe2nav_;
-
-  std::unique_ptr<std::thread> publish_spin_thread_;
-  std::unique_ptr<std::thread> subscribe_spin_thread_;
+  rclcpp::executors::MultiThreadedExecutor executor_;
+  std::unique_ptr<std::thread> spin_thread_;
 };
 
 }  // namespace io

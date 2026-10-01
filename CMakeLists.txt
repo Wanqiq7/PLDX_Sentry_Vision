@@ -158,6 +158,11 @@ add_executable(libxr_cdc_smoke tests/libxr_cdc_smoke.cpp)
 target_link_libraries(libxr_cdc_smoke ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
 
 # 检查 ROS 环境
+add_executable(plan_command_test tests/plan_command_test.cpp)
+target_link_libraries(plan_command_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+target_compile_options(plan_command_test PRIVATE -UNDEBUG)
+add_test(NAME plan_command_test COMMAND plan_command_test)
+
 find_package(ament_cmake QUIET)
 find_package(rclcpp QUIET)
 find_package(std_msgs QUIET)

@@ -55,6 +55,11 @@ public:
       libxr_protocol::NAV_GIMBAL_FEEDBACK_TOPIC)),
     nav_topic_(LibXR::Topic::CreateTopic<ChassisTarget>(navigation_protocol::NAV_DATA_TOPIC)),
     behavior_topic_(LibXR::Topic::CreateTopic<BehaviorData>(navigation_protocol::BEHAVIOR_DATA_TOPIC)),
+    team_topic_(LibXR::Topic::CreateTopic<navigation_protocol::TeamInfo>(navigation_protocol::TEAM_INFO_TOPIC)),
+    game_topic_(LibXR::Topic::CreateTopic<navigation_protocol::GameInfo>(navigation_protocol::GAME_INFO_TOPIC)),
+    online_topic_(LibXR::Topic::CreateTopic<navigation_protocol::SentryInfoOnline>(navigation_protocol::ONLINE_INFO_TOPIC)),
+    offline_topic_(LibXR::Topic::CreateTopic<navigation_protocol::SentryInfoOffline>(navigation_protocol::OFFLINE_INFO_TOPIC)),
+    radar_topic_(LibXR::Topic::CreateTopic<navigation_protocol::RadarInfo>(navigation_protocol::RADAR_INFO_TOPIC)),
     server_(512),
     target_callback_(LibXR::Topic::Callback::Create(
       [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) {
@@ -94,6 +99,11 @@ public:
     behavior_topic_.RegisterCallback(behavior_callback_);
     server_.Register(ahrs_topic_);
     server_.Register(feedback_topic_);
+    server_.Register(team_topic_);
+    server_.Register(game_topic_);
+    server_.Register(online_topic_);
+    server_.Register(offline_topic_);
+    server_.Register(radar_topic_);
 
     rx_thread_ = std::thread(&Impl::ReceiveLoop, this);
     tx_thread_ = std::thread(&Impl::TransmitLoop, this);
@@ -331,6 +341,7 @@ private:
   LibXR::Topic feedback_topic_;
   LibXR::Topic nav_topic_;
   LibXR::Topic behavior_topic_;
+  LibXR::Topic team_topic_, game_topic_, online_topic_, offline_topic_, radar_topic_;
   LibXR::Topic::Server server_;
   LibXR::Topic::Callback target_callback_;
   LibXR::Topic::Callback fire_callback_;

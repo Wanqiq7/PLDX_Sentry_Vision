@@ -8,7 +8,7 @@
 
 namespace io
 {
-enum class TopicKind { TARGET, FIRE };
+enum class TopicKind { TARGET, FIRE, NAV, BEHAVIOR };
 
 class OutgoingBridge
 {
@@ -23,6 +23,8 @@ private:
   std::optional<std::vector<uint8_t>> pending_target_;
   std::optional<std::vector<uint8_t>> pending_safe_fire_;
   std::optional<std::vector<uint8_t>> pending_fire_;
+  std::optional<std::vector<uint8_t>> pending_nav_;
+  std::optional<std::vector<uint8_t>> pending_behavior_;
   std::optional<std::vector<uint8_t>> in_flight_;
 };
 }  // namespace io

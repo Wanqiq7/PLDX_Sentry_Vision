@@ -15,6 +15,12 @@ void OutgoingBridge::Submit(TopicKind topic, std::span<const uint8_t> packet)
     case TopicKind::FIRE:
       pending_fire_ = std::move(owned);
       break;
+    case TopicKind::NAV:
+      pending_nav_ = std::move(owned);
+      break;
+    case TopicKind::BEHAVIOR:
+      pending_behavior_ = std::move(owned);
+      break;
   }
 }
 
@@ -34,6 +40,12 @@ std::optional<std::span<const uint8_t>> OutgoingBridge::BeginNext()
   } else if (pending_fire_) {
     in_flight_ = std::move(pending_fire_);
     pending_fire_.reset();
+  } else if (pending_nav_) {
+    in_flight_ = std::move(pending_nav_);
+    pending_nav_.reset();
+  } else if (pending_behavior_) {
+    in_flight_ = std::move(pending_behavior_);
+    pending_behavior_.reset();
   } else {
     return std::nullopt;
   }

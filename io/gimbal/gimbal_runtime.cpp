@@ -24,6 +24,8 @@ using libxr_protocol::FirePayload;
 using libxr_protocol::GimbalFeedbackPayload;
 using libxr_protocol::QuaternionPayload;
 using libxr_protocol::TargetEulerPayload;
+using navigation_protocol::BehaviorData;
+using navigation_protocol::ChassisTarget;
 
 namespace
 {
@@ -50,6 +52,8 @@ public:
     ahrs_topic_(LibXR::Topic::CreateTopic<QuaternionPayload>(libxr_protocol::AHRS_QUATERNION_TOPIC)),
     feedback_topic_(LibXR::Topic::CreateTopic<GimbalFeedbackPayload>(
       libxr_protocol::NAV_GIMBAL_FEEDBACK_TOPIC)),
+    nav_topic_(LibXR::Topic::CreateTopic<ChassisTarget>(navigation_protocol::NAV_DATA_TOPIC)),
+    behavior_topic_(LibXR::Topic::CreateTopic<BehaviorData>(navigation_protocol::BEHAVIOR_DATA_TOPIC)),
     server_(512),
     target_callback_(LibXR::Topic::Callback::Create(
       [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) {
@@ -71,12 +75,22 @@ public:
         self->HandleFeedback(message);
       },
       this)),
+    nav_callback_(LibXR::Topic::Callback::Create(
+      [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) {
+        self->QueuePacket(TopicKind::NAV, self->nav_topic_, message);
+      }, this)),
+    behavior_callback_(LibXR::Topic::Callback::Create(
+      [](bool, Impl * self, const LibXR::Topic::RawMessageView & message) {
+        self->QueuePacket(TopicKind::BEHAVIOR, self->behavior_topic_, message);
+      }, this)),
     gate_([this] { ForceSafeFire(); })
   {
     target_topic_.RegisterCallback(target_callback_);
     fire_topic_.RegisterCallback(fire_callback_);
     ahrs_topic_.RegisterCallback(ahrs_callback_);
     feedback_topic_.RegisterCallback(feedback_callback_);
+    nav_topic_.RegisterCallback(nav_callback_);
+    behavior_topic_.RegisterCallback(behavior_callback_);
     server_.Register(ahrs_topic_);
     server_.Register(feedback_topic_);
 
@@ -103,6 +117,8 @@ public:
   }
 
   void SendPassiveFalseFire() { gate_.SubmitPassiveFalseFire(); }
+  void SendNavData(const ChassisTarget & value) { nav_topic_.Publish(value); }
+  void SendBehaviorData(const BehaviorData & value) { behavior_topic_.Publish(value); }
 
   void WaitReady() { gate_.WaitReady(); }
 
@@ -312,11 +328,15 @@ private:
   LibXR::Topic fire_topic_;
   LibXR::Topic ahrs_topic_;
   LibXR::Topic feedback_topic_;
+  LibXR::Topic nav_topic_;
+  LibXR::Topic behavior_topic_;
   LibXR::Topic::Server server_;
   LibXR::Topic::Callback target_callback_;
   LibXR::Topic::Callback fire_callback_;
   LibXR::Topic::Callback ahrs_callback_;
   LibXR::Topic::Callback feedback_callback_;
+  LibXR::Topic::Callback nav_callback_;
+  LibXR::Topic::Callback behavior_callback_;
   OutgoingBridge outgoing_;
   GimbalRuntimeGate gate_;
   LibXR::Semaphore rx_sem_;
@@ -368,4 +388,6 @@ Eigen::Quaterniond GimbalRuntime::WaitQuaternion(AhrsTimeline::Clock::time_point
 RuntimeSnapshot GimbalRuntime::Snapshot() const { return impl_->Snapshot(); }
 
 bool GimbalRuntime::HasFreshAhrs() const { return impl_->HasFreshAhrs(); }
+void GimbalRuntime::SendNavData(const navigation_protocol::ChassisTarget & value) { impl_->SendNavData(value); }
+void GimbalRuntime::SendBehaviorData(const navigation_protocol::BehaviorData & value) { impl_->SendBehaviorData(value); }
 }  // namespace io

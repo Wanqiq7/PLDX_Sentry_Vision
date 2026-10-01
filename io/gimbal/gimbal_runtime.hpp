@@ -8,6 +8,7 @@
 
 #include "io/gimbal/ahrs_timeline.hpp"
 #include "io/gimbal/libxr_protocol.hpp"
+#include "io/ros2/navigation_protocol.hpp"
 
 namespace io
 {
@@ -57,6 +58,8 @@ public:
   void SendTarget(const libxr_protocol::TargetEulerPayload & target);
   void SendFire(bool fire);
   void SendPassiveFalseFire();
+  void SendNavData(const navigation_protocol::ChassisTarget & value);
+  void SendBehaviorData(const navigation_protocol::BehaviorData & value);
   void WaitReady();
   Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested);
   [[nodiscard]] RuntimeSnapshot Snapshot() const;

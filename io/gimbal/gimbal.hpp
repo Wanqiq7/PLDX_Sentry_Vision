@@ -47,6 +47,7 @@ struct GimbalState
   float pitch_vel;
   float bullet_speed;
   uint16_t bullet_count;
+  bool feedback_fresh;
 };
 
 class Gimbal
@@ -58,16 +59,21 @@ public:
   GimbalMode mode() const;
   GimbalControlMode control_mode() const;
   GimbalState state() const;
+  bool feedback_fresh() const { return state().feedback_fresh; }
   std::string str(GimbalMode mode) const;
   Eigen::Quaterniond q(std::chrono::steady_clock::time_point t);
   Eigen::Quaterniond imu_at(std::chrono::steady_clock::time_point t) { return q(t); }
   io::Mode legacy_mode() const;
   double bullet_speed_value() const { return state().bullet_speed; }
+  // Compatibility API; revision 2 no longer reports a shoot-mode field.
   io::ShootMode shoot_mode_value() const;
   void send(const io::Command & command)
   {
-    send(command.control, command.shoot, static_cast<float>(command.yaw), 0, 0,
-      static_cast<float>(command.pitch), 0, 0);
+    send(
+      command.control, command.shoot, static_cast<float>(command.yaw),
+      static_cast<float>(command.yaw_vel), static_cast<float>(command.yaw_acc),
+      static_cast<float>(command.pitch), static_cast<float>(command.pitch_vel),
+      static_cast<float>(command.pitch_acc));
   }
   void send(
     bool control, bool fire, float yaw, float yaw_vel, float yaw_acc, float pitch, float pitch_vel,
@@ -76,8 +82,6 @@ public:
 
 private:
   std::shared_ptr<GimbalRuntime> runtime_;
-  GimbalMode default_mode_ = GimbalMode::AUTO_AIM;
-  double default_bullet_speed_ = 23.0;
 };
 }  // namespace io
 

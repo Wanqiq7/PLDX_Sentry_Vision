@@ -19,27 +19,31 @@ void TestDtoLayoutAndMapping()
   static_assert(std::string_view(io::libxr_protocol::FIRE_NOTIFY_TOPIC) == "fire_notify");
   static_assert(std::string_view(io::libxr_protocol::AHRS_QUATERNION_TOPIC) == "ahrs_quaternion");
   static_assert(
-    std::string_view(io::libxr_protocol::NAV_GIMBAL_FEEDBACK_TOPIC) == "nav_gimbal_feedback_v1");
+    std::string_view(io::libxr_protocol::NAV_GIMBAL_FEEDBACK_TOPIC) == "nav_gimbal_feedback");
   static_assert(sizeof(io::libxr_protocol::TargetEulerPayload) == 36);
   static_assert(sizeof(io::libxr_protocol::FirePayload) == 1);
   static_assert(sizeof(QuaternionPayload) == 16);
-  static_assert(sizeof(GimbalFeedbackPayload) == 12);
+  static_assert(sizeof(GimbalFeedbackPayload) == 28);
   static_assert(alignof(GimbalFeedbackPayload) == 1);
-  static_assert(offsetof(GimbalFeedbackPayload, bullet_speed) == 0);
-  static_assert(offsetof(GimbalFeedbackPayload, bullet_count) == 4);
-  static_assert(offsetof(GimbalFeedbackPayload, gimbal_mode) == 6);
-  static_assert(offsetof(GimbalFeedbackPayload, shoot_mode) == 7);
-  static_assert(offsetof(GimbalFeedbackPayload, valid_flags) == 8);
-  static_assert(offsetof(GimbalFeedbackPayload, reserved) == 9);
+  static_assert(offsetof(GimbalFeedbackPayload, yaw) == 0);
+  static_assert(offsetof(GimbalFeedbackPayload, pitch) == 4);
+  static_assert(offsetof(GimbalFeedbackPayload, bullet_speed) == 16);
+  static_assert(offsetof(GimbalFeedbackPayload, bullet_count) == 20);
+  static_assert(offsetof(GimbalFeedbackPayload, gimbal_mode) == 22);
+  static_assert(offsetof(GimbalFeedbackPayload, vision_task) == 23);
+  static_assert(offsetof(GimbalFeedbackPayload, valid_flags) == 24);
+  static_assert(offsetof(GimbalFeedbackPayload, reserved) == 25);
 
   GimbalFeedbackPayload feedback{
-    18.5F, 42, 2, 1,
+    0.25F, -0.5F, 1.5F, -2.0F, 18.5F, 42, 2, 3,
     static_cast<uint8_t>(io::libxr_protocol::FEEDBACK_VALID_MASK), {0, 0, 0}};
+  assert(feedback.yaw == 0.25F);
+  assert(feedback.pitch == -0.5F);
   assert(feedback.bullet_speed == 18.5F);
   assert(feedback.bullet_count == 42);
   assert(feedback.gimbal_mode == 2);
-  assert(feedback.shoot_mode == 1);
-  assert(feedback.valid_flags == 0x78);
+  assert(feedback.vision_task == 3);
+  assert(feedback.valid_flags == 0x7F);
 
   const auto target = io::libxr_protocol::EncodeTarget(1.0F, 2.0F, 3.0F, 4.0F, 5.0F, 6.0F);
   assert(target.rol == 0.0F);

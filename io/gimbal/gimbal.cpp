@@ -11,16 +11,18 @@ Gimbal::Gimbal(const std::string & config_path)
 {
   const auto config = LoadGimbalConfig(config_path);
   runtime_ = std::shared_ptr<GimbalRuntime>(&GimbalRuntime::Instance(config), [](GimbalRuntime *) {});
-  default_mode_ = static_cast<GimbalMode>(config.default_mode);
-  default_bullet_speed_ = config.default_bullet_speed;
-  tools::logger()->info("[Gimbal] LibXR SharedTopic runtime; waiting for live gimbal feedback.");
+  tools::logger()->info("[Gimbal] LibXR Topic transport; waiting for live gimbal feedback.");
   runtime_->WaitReady();
 }
 
 GimbalMode Gimbal::mode() const
 {
-  return control_mode() == GimbalControlMode::COMMON ? GimbalMode::AUTO_AIM :
-                                                       GimbalMode::IDLE;
+  const auto snapshot = runtime_->Snapshot();
+  if (snapshot.fresh_feedback &&
+      (snapshot.feedback_flags & libxr_protocol::FEEDBACK_VISION_TASK_VALID) != 0U) {
+    return static_cast<GimbalMode>(snapshot.vision_task);
+  }
+  return static_cast<GimbalMode>(snapshot.default_mode);
 }
 
 GimbalControlMode Gimbal::control_mode() const
@@ -34,15 +36,17 @@ GimbalControlMode Gimbal::control_mode() const
 GimbalState Gimbal::state() const
 {
   const auto snapshot = runtime_->Snapshot();
-  return {0.0F, 0.0F, 0.0F, 0.0F, snapshot.bullet_speed, snapshot.bullet_count};
+  const auto speed_valid = snapshot.fresh_feedback &&
+    (snapshot.feedback_flags & libxr_protocol::FEEDBACK_BULLET_SPEED_VALID) != 0U &&
+    snapshot.bullet_speed > 0.0F;
+  return {snapshot.yaw, snapshot.yaw_velocity, snapshot.pitch, snapshot.pitch_velocity,
+    speed_valid ? snapshot.bullet_speed : static_cast<float>(snapshot.default_bullet_speed),
+    snapshot.bullet_count, snapshot.fresh_feedback};
 }
 
 io::ShootMode Gimbal::shoot_mode_value() const
 {
-  const auto snapshot = runtime_->Snapshot();
-  return snapshot.fresh_feedback &&
-      (snapshot.feedback_flags & libxr_protocol::FEEDBACK_SHOOT_MODE_VALID) != 0U ?
-    static_cast<io::ShootMode>(snapshot.shoot_mode) : io::left_shoot;
+  return io::left_shoot;
 }
 
 std::string Gimbal::str(GimbalMode mode) const

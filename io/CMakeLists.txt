@@ -10,7 +10,6 @@ add_library(io STATIC
     mindvision/mindvision.cpp  
     usbcamera/usbcamera.cpp  
     camera.cpp
-    cboard.cpp
     dm_imu/dm_imu.cpp
     gimbal/gimbal.cpp
     gimbal/gimbal_config.cpp
@@ -54,8 +53,8 @@ find_package(sp_msgs QUIET)
 find_package(pldx_vision_interfaces QUIET)
 
 # 如果找不到 ROS 环境，则跳过 ROS 相关的部分
-if(NOT ament_cmake_FOUND OR NOT rclcpp_FOUND OR NOT std_msgs_FOUND OR NOT rosidl_typesupport_cpp_FOUND OR NOT pldx_vision_interfaces_FOUND)
-    message(STATUS "ROS2 or pldx_vision_interfaces not found, skipping ROS2 IO integration.")
+if(NOT BUILD_SENTRY)
+    message(STATUS "BUILD_SENTRY=OFF: ROS2 IO integration disabled.")
 else()
     message(STATUS "ROS2 environment found, compiling ROS2-related code.")
     

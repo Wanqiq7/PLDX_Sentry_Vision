@@ -11,6 +11,7 @@
 #include "io/ros2/ros2.hpp"
 #include "io/usbcamera/usbcamera.hpp"
 #include "tasks/auto_aim/aimer.hpp"
+#include "tasks/auto_aim/planner/planner.hpp"
 #include "tasks/auto_aim/shooter.hpp"
 #include "tasks/auto_aim/solver.hpp"
 #include "tasks/auto_aim/tracker.hpp"
@@ -53,6 +54,7 @@ int main(int argc, char * argv[])
   auto_aim::Solver solver(config_path);
   auto_aim::Tracker tracker(config_path, solver);
   auto_aim::Aimer aimer(config_path);
+  auto_aim::Planner planner(config_path);
   auto_aim::Shooter shooter(config_path);
 
   omniperception::Decider decider(config_path);
@@ -89,11 +91,13 @@ int main(int argc, char * argv[])
     /// 全向感知逻辑
     if (tracker.state() == "lost")
       command = decider.decide(yolo, gimbal_pos, usbcam1, usbcam2, back_camera, directive);
-    else
-      command = aimer.aim(targets, timestamp,  gimbal.bullet_speed_value(),  gimbal.shoot_mode_value());
+    else if (!targets.empty()) {
+      command = auto_aim::to_command(
+        planner.plan(std::optional<auto_aim::Target>{targets.front()}, gimbal.bullet_speed_value()));
+    }
 
     /// 发射逻辑
-    command.shoot = shooter.shoot(command, aimer, targets, gimbal_pos);
+    command.shoot = shooter.shoot(command, aimer, targets, gimbal_pos, tracker.state() == "lost");
 
      gimbal.send(command);
 

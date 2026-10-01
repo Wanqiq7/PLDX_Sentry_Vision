@@ -10,6 +10,20 @@ using namespace std::chrono_literals;
 
 namespace auto_aim
 {
+io::Command to_command(const Plan & plan)
+{
+  io::Command command;
+  command.control = plan.control;
+  command.shoot = plan.fire;
+  command.yaw = plan.yaw;
+  command.pitch = plan.pitch;
+  command.yaw_vel = plan.yaw_vel;
+  command.yaw_acc = plan.yaw_acc;
+  command.pitch_vel = plan.pitch_vel;
+  command.pitch_acc = plan.pitch_acc;
+  return command;
+}
+
 Planner::Planner(const std::string & config_path)
 {
   auto yaml = tools::load(config_path);

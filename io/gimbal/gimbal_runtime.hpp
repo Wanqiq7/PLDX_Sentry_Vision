@@ -14,6 +14,12 @@ namespace io
 struct RuntimeConfig
 {
   std::string device;
+  // When control_interface is set, LinuxUART discovers the CDC device by
+  // VID/PID and the parent CDC control-interface string.  device remains for
+  // PTY/unit-test fixtures and legacy non-USB transports.
+  std::string transport_vid;
+  std::string transport_pid;
+  std::string transport_control_interface;
   uint32_t baudrate;
   int default_mode;
   double default_bullet_speed;
@@ -25,10 +31,11 @@ struct RuntimeSnapshot
   int default_mode;
   double default_bullet_speed;
   bool fresh_ahrs;
+  float yaw = 0.0F, yaw_velocity = 0.0F, pitch = 0.0F, pitch_velocity = 0.0F;
   float bullet_speed = 0.0F;
   uint16_t bullet_count = 0;
   uint8_t gimbal_mode = 0;
-  uint8_t shoot_mode = 0;
+  uint8_t vision_task = 0;
   uint8_t feedback_flags = 0;
   bool fresh_feedback = false;
   uint64_t rx_topic_updates = 0, rx_bytes = 0, tx_publish_requests = 0;

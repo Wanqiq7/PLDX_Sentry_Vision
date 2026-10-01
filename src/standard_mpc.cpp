@@ -78,8 +78,8 @@ int main(int argc, char * argv[])
         auto plan = planner.plan(target, gs.bullet_speed);
 
         gimbal.send(
-          plan.control, plan.fire, plan.yaw, plan.yaw_vel, plan.yaw_acc, plan.pitch, plan.pitch_vel,
-          plan.pitch_acc);
+          gs.feedback_fresh && plan.control, gs.feedback_fresh && plan.fire, plan.yaw,
+          plan.yaw_vel, plan.yaw_acc, plan.pitch, plan.pitch_vel, plan.pitch_acc);
 
         std::this_thread::sleep_for(10ms);
       } else
@@ -92,6 +92,9 @@ int main(int argc, char * argv[])
 
     if (last_mode != mode) {
       tools::logger()->info("Switch to {}", gimbal.str(mode));
+      target_queue.clear();
+      target_queue.push(std::nullopt);
+      gimbal.send(false, false, 0, 0, 0, 0, 0, 0);
       last_mode = mode.load();
     }
 
@@ -131,8 +134,9 @@ int main(int argc, char * argv[])
         buff_plan = buff_aimer.mpc_aim(target_copy, t, gs, true);
       }
       gimbal.send(
-        buff_plan.control, buff_plan.fire, buff_plan.yaw, buff_plan.yaw_vel, buff_plan.yaw_acc,
-        buff_plan.pitch, buff_plan.pitch_vel, buff_plan.pitch_acc);
+        gs.feedback_fresh && buff_plan.control, gs.feedback_fresh && buff_plan.fire,
+        buff_plan.yaw, buff_plan.yaw_vel, buff_plan.yaw_acc, buff_plan.pitch,
+        buff_plan.pitch_vel, buff_plan.pitch_acc);
 
     } else
       gimbal.send(false, false, 0, 0, 0, 0, 0, 0);

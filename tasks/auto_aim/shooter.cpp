@@ -18,7 +18,8 @@ Shooter::Shooter(const std::string & config_path) : last_command_{false, false, 
 
 bool Shooter::shoot(
   const io::Command & command, const auto_aim::Aimer & aimer,
-  const std::list<auto_aim::Target> & targets, const Eigen::Vector3d & gimbal_pos)
+  const std::list<auto_aim::Target> & targets, const Eigen::Vector3d & gimbal_pos,
+  bool require_aimer_solution)
 {
   if (!command.control || targets.empty() || !auto_fire_) return false;
 
@@ -31,7 +32,7 @@ bool Shooter::shoot(
   if (
     std::abs(last_command_.yaw - command.yaw) < tolerance * 2 &&  //此时认为command突变不应该射击
     std::abs(gimbal_pos[0] - last_command_.yaw) < tolerance &&    //应该减去上一次command的yaw值
-    aimer.debug_aim_point.valid) {
+    (!require_aimer_solution || aimer.debug_aim_point.valid)) {
     last_command_ = command;
     return true;
   }

@@ -49,6 +49,7 @@ class GimbalRuntime
 public:
   // The first acquisition owns the process-lifetime runtime; later acquisitions throw.
   static GimbalRuntime & Instance(const RuntimeConfig & config);
+  static GimbalRuntime * Current() noexcept;
 
   GimbalRuntime(const GimbalRuntime &) = delete;
   GimbalRuntime & operator=(const GimbalRuntime &) = delete;

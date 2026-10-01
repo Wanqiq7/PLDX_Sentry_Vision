@@ -27,6 +27,15 @@ Subscribe2Nav::Subscribe2Nav()
       std::bind(&Subscribe2Nav::target_directive_callback, this, std::placeholders::_1));
 #endif
 
+  cmd_vel_subscription_ = create_subscription<geometry_msgs::msg::Twist>(
+    "/cmd_vel_mpc", rclcpp::QoS(1),
+    std::bind(&Subscribe2Nav::cmd_vel_callback, this, std::placeholders::_1));
+#ifdef IO_HAS_ROS_INTERFACES
+  behavior_subscription_ = create_subscription<ros_interfaces::msg::Behavior>(
+    "/sentry/behavior", rclcpp::QoS(1),
+    std::bind(&Subscribe2Nav::behavior_callback, this, std::placeholders::_1));
+#endif
+
 #ifdef IO_HAS_SP_MSGS
   enemy_status_subscription_ = create_subscription<sp_msgs::msg::EnemyStatusMsg>(
     "enemy_status", 10,
@@ -54,6 +63,44 @@ TargetDirective Subscribe2Nav::subscribe_target_directive() const
 {
   return directive_store_.snapshot();
 }
+
+void Subscribe2Nav::cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg)
+{
+  if (auto * runtime = GimbalRuntime::Current()) {
+    navigation_protocol::ChassisTarget value{};
+    value.vx_mps = static_cast<float>(msg->linear.x);
+    value.vy_mps = static_cast<float>(msg->linear.y);
+    value.vw_rad_s = static_cast<float>(msg->angular.z);
+    value.use_speed_control = true;
+    runtime->SendNavData(value);
+  }
+}
+
+#ifdef IO_HAS_ROS_INTERFACES
+void Subscribe2Nav::behavior_callback(const ros_interfaces::msg::Behavior::SharedPtr msg)
+{
+  if (auto * runtime = GimbalRuntime::Current()) {
+    navigation_protocol::BehaviorData value{};
+    value.pitch_mode = msg->pitch_mode;
+    value.desire_stance = msg->desired_stance;
+    value.desire_lifter_pos = msg->desire_lifter_pos;
+    value.scan_yaw_min_rad = msg->scan_yaw_min * 0.017453292519943295F;
+    value.scan_yaw_max_rad = msg->scan_yaw_max * 0.017453292519943295F;
+    value.ammo_purchase_request = msg->ammo_purchase_request;
+    value.revive_request = msg->revive_request;
+    value.remote_revive_request = msg->remote_revive_request;
+    value.remote_ammo_request = msg->remote_ammo_request;
+    value.remote_health_request = msg->remote_health_request;
+    value.use_limited_scan = msg->use_limited_scan;
+    value.not_aim_enemy = msg->not_aim_enemy;
+    value.use_capacitor = msg->use_capacitor;
+    value.tunnel_align_active = msg->tunnel_align_active;
+    value.tunnel_align_angle_rad = msg->tunnel_align_angle_deg * 0.017453292519943295F;
+    value.use_gyro_mode = msg->use_gyro_mode;
+    runtime->SendBehaviorData(value);
+  }
+}
+#endif
 
 #ifdef IO_HAS_PLDX_VISION_INTERFACES
 void Subscribe2Nav::target_directive_callback(

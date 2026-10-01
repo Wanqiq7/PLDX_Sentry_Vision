@@ -5,6 +5,11 @@
 
 #include <memory>
 #include <vector>
+#include "io/gimbal/gimbal_runtime.hpp"
+#include "geometry_msgs/msg/twist.hpp"
+#ifdef IO_HAS_ROS_INTERFACES
+#include "ros_interfaces/msg/behavior.hpp"
+#endif
 
 #include "target_directive.hpp"
 
@@ -16,6 +21,12 @@
 #include "sp_msgs/msg/autoaim_target_msg.hpp"
 #include "sp_msgs/msg/enemy_status_msg.hpp"
 #endif
+#ifdef IO_HAS_ROS_INTERFACES
+  void behavior_callback(const ros_interfaces::msg::Behavior::SharedPtr msg);
+  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr behavior_subscription_;
+#endif
+  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;
 
 namespace io
 {

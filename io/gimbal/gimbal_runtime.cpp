@@ -29,6 +29,7 @@ using navigation_protocol::ChassisTarget;
 
 namespace
 {
+GimbalRuntime * current_runtime = nullptr;
 std::unique_ptr<LibXR::LinuxUART> OpenTransport(const RuntimeConfig & config)
 {
   if (!config.transport_control_interface.empty()) {
@@ -365,8 +366,11 @@ GimbalRuntime & GimbalRuntime::Instance(const RuntimeConfig & config)
   static std::once_flag platform_once;
   std::call_once(platform_once, [] { LibXR::PlatformInit(); });
   instance = new GimbalRuntime(config);
+  current_runtime = instance;
   return *instance;
 }
+
+GimbalRuntime * GimbalRuntime::Current() noexcept { return current_runtime; }
 
 GimbalRuntime::GimbalRuntime(const RuntimeConfig & config) : impl_(std::make_unique<Impl>(config)) {}
 

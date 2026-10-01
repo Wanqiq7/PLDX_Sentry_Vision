@@ -4,6 +4,15 @@ project(sp_vision)
 
 include(CTest)
 
+option(BUILD_SENTRY "Build production sentry executables with ROS2 integration" ON)
+if(BUILD_SENTRY)
+  find_package(ament_cmake REQUIRED)
+  find_package(rclcpp REQUIRED)
+  find_package(std_msgs REQUIRED)
+  find_package(rosidl_typesupport_cpp REQUIRED)
+  find_package(pldx_vision_interfaces REQUIRED)
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Release)
 message(STATUS "--------------------CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}--------------------")
@@ -149,6 +158,11 @@ add_executable(gimbal_command_test tests/gimbal_command_test.cpp)
 target_compile_options(gimbal_command_test PRIVATE -UNDEBUG)
 add_test(NAME gimbal_command_test COMMAND gimbal_command_test)
 
+add_executable(plan_command_test tests/plan_command_test.cpp)
+target_link_libraries(plan_command_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+target_compile_options(plan_command_test PRIVATE -UNDEBUG)
+add_test(NAME plan_command_test COMMAND plan_command_test)
+
 add_executable(libxr_pty_test tests/libxr_pty_test.cpp)
 target_link_libraries(libxr_pty_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
 target_compile_options(libxr_pty_test PRIVATE -UNDEBUG)
@@ -158,11 +172,6 @@ add_executable(libxr_cdc_smoke tests/libxr_cdc_smoke.cpp)
 target_link_libraries(libxr_cdc_smoke ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
 
 # 检查 ROS 环境
-add_executable(plan_command_test tests/plan_command_test.cpp)
-target_link_libraries(plan_command_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
-target_compile_options(plan_command_test PRIVATE -UNDEBUG)
-add_test(NAME plan_command_test COMMAND plan_command_test)
-
 find_package(ament_cmake QUIET)
 find_package(rclcpp QUIET)
 find_package(std_msgs QUIET)
@@ -170,7 +179,7 @@ find_package(rosidl_typesupport_cpp QUIET)
 find_package(sp_msgs QUIET)
 find_package(pldx_vision_interfaces QUIET)
 # 只有在找到 ROS 环境时才会添加 sentry 和 publish_test
-if(ament_cmake_FOUND AND rclcpp_FOUND AND std_msgs_FOUND AND rosidl_typesupport_cpp_FOUND AND pldx_vision_interfaces_FOUND)
+if(BUILD_SENTRY)
     # 编译 sentry 和 publish_test
     add_executable(sentry src/sentry.cpp)
     add_executable(sentry_bp src/sentry_bp.cpp)
@@ -196,5 +205,5 @@ if(ament_cmake_FOUND AND rclcpp_FOUND AND std_msgs_FOUND AND rosidl_typesupport_
       target_compile_definitions(topic_loop_test PUBLIC IO_HAS_SP_MSGS=1)
     endif()
 else()
-    message(STATUS "ROS2 or pldx_vision_interfaces not found, skipping production sentry executables.")
+    message(STATUS "BUILD_SENTRY=OFF: production sentry executables disabled.")
 endif()

@@ -24,8 +24,7 @@ void write_q(const std::string q_path, const Eigen::Quaterniond & q)
   q_file.close();
 }
 
-void capture_loop(
-  const std::string & config_path, const std::string & can, const std::string & output_folder)
+void capture_loop(const std::string & config_path, const std::string & output_folder)
 {
   io::Gimbal  gimbal(config_path);
   io::Camera camera(config_path);
@@ -86,7 +85,7 @@ int main(int argc, char * argv[])
 
   tools::logger()->info("默认标定板尺寸为10列7行");
   // 主循环，保存图片和对应四元数
-  capture_loop(config_path, "can0", output_folder);
+  capture_loop(config_path, output_folder);
 
   tools::logger()->warn("注意四元数输出顺序为wxyz");
 

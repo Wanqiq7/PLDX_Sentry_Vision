@@ -21,14 +21,6 @@
 #include "sp_msgs/msg/autoaim_target_msg.hpp"
 #include "sp_msgs/msg/enemy_status_msg.hpp"
 #endif
-#ifdef IO_HAS_ROS_INTERFACES
-  void behavior_callback(const ros_interfaces::msg::Behavior::SharedPtr msg);
-  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr behavior_subscription_;
-  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr legacy_behavior_subscription_;
-#endif
-  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
-  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;
-
 namespace io
 {
 class Subscribe2Nav : public rclcpp::Node
@@ -46,6 +38,13 @@ public:
 #endif
 
 private:
+  void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
+  rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;
+#ifdef IO_HAS_ROS_INTERFACES
+  void behavior_callback(const ros_interfaces::msg::Behavior::SharedPtr msg);
+  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr behavior_subscription_;
+  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr legacy_behavior_subscription_;
+#endif
 #ifdef IO_HAS_PLDX_VISION_INTERFACES
   void target_directive_callback(
     const pldx_vision_interfaces::msg::VisionTargetDirective::SharedPtr msg);

@@ -34,6 +34,9 @@ Subscribe2Nav::Subscribe2Nav()
   behavior_subscription_ = create_subscription<ros_interfaces::msg::Behavior>(
     "/sentry/behavior", rclcpp::QoS(1),
     std::bind(&Subscribe2Nav::behavior_callback, this, std::placeholders::_1));
+  legacy_behavior_subscription_ = create_subscription<ros_interfaces::msg::Behavior>(
+    "/sentry/behaivor_send", rclcpp::QoS(1),
+    std::bind(&Subscribe2Nav::behavior_callback, this, std::placeholders::_1));
 #endif
 
 #ifdef IO_HAS_SP_MSGS

@@ -24,6 +24,7 @@
 #ifdef IO_HAS_ROS_INTERFACES
   void behavior_callback(const ros_interfaces::msg::Behavior::SharedPtr msg);
   rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr behavior_subscription_;
+  rclcpp::Subscription<ros_interfaces::msg::Behavior>::SharedPtr legacy_behavior_subscription_;
 #endif
   void cmd_vel_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_subscription_;

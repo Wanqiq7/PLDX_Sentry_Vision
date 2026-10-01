@@ -125,7 +125,7 @@ void Publish2Nav::publish_navigation_feedback()
   offline.capacitor_capacity = feedback.offline.capacitor_capacity; offline.chassis_imu_yaw = feedback.offline.chassis_imu_yaw;
   offline.tunnel_yaw_aligned = feedback.offline.tunnel_yaw_aligned; offline_publisher_->publish(offline);
   ros_interfaces::msg::RadarInfo radar; radar.header.stamp = stamp;
-  for (size_t i = 0; i < 6; ++i) { radar.enemies[i].robot_id = feedback.radar.enemy_status[i].robot_id; radar.enemies[i].robot_hp = feedback.radar.enemy_status[i].robot_hp; radar.enemies[i].allowed_projectile = feedback.radar.enemy_status[i].allowed_projectile; radar.enemies[i].robot_pos_x = feedback.radar.enemy_status[i].robot_pos_x; radar.enemies[i].robot_pos_y = feedback.radar.enemy_status[i].robot_pos_y; }
+  for (size_t i = 0; i < 6; ++i) { radar.enemies[i].robot_id = feedback.radar.enemy_status[i].robot_id; radar.enemies[i].robot_hp = feedback.radar.enemy_status[i].robot_hp; radar.enemies[i].allowed_projectile = feedback.radar.enemy_status[i].allowed_projectile; radar.enemies[i].position.position.x = feedback.radar.enemy_status[i].robot_pos_x; radar.enemies[i].position.position.y = feedback.radar.enemy_status[i].robot_pos_y; }
   radar.enemy_coin_left = feedback.radar.enemy_coin_left; radar.enemy_coin_accumulated = feedback.radar.enemy_coin_accumulated; radar.is_enemy_outpost_sensed = feedback.radar.is_enemy_outpost_sensed; radar_publisher_->publish(radar);
 }
 #endif

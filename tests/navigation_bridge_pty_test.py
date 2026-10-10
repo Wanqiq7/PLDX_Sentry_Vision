@@ -65,7 +65,9 @@ def main():
         records = []
         start = time.monotonic()
         try:
-            while time.monotonic() - start < 7.95:
+            # Keep feedback flowing until the checker takes its final snapshot.
+            # Stopping at a fixed deadline races the AHRS freshness timeout.
+            while process.poll() is None and time.monotonic() - start < 10:
                 elapsed = time.monotonic() - start
                 stamp = int(elapsed * 1e6) + 1
                 frames = [packet('ahrs_quaternion', struct.pack('<4f', 0, 0, 0, 1), stamp),
@@ -111,7 +113,7 @@ def main():
                     elif key == topic_key('fire_notify'):
                         assert payload == b'\x00', 'Test must never send fire=true'
                 time.sleep(.01)
-                if process.poll() is not None:
+                if process.poll() is not None and elapsed < 7.5:
                     raise AssertionError('Bridge exited early')
             process.wait(timeout=5)
             log.seek(0); output = log.read(); print(output)

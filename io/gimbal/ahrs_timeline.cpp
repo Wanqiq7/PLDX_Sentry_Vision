@@ -39,7 +39,7 @@ SampleResult AhrsTimeline::OnSample(
 
   std::lock_guard lock(mutex_);
   const bool expired = has_anchor_ && local_time - last_receive_ >= kFreshness;
-  const bool recovered = stale_ || expired || (has_anchor_ && remote_us < last_remote_);
+  bool recovered = stale_ || expired || (has_anchor_ && remote_us < last_remote_);
   const bool reset_mapping = !has_anchor_ || recovered || remote_us < last_remote_;
   if (reset_mapping) {
     samples_.clear();
@@ -52,6 +52,16 @@ SampleResult AhrsTimeline::OnSample(
   auto mapped_time = local_anchor_;
   if (remote_us >= remote_anchor_) {
     mapped_time += std::chrono::microseconds(remote_us - remote_anchor_);
+  }
+  // A burst of buffered packets can advance remote time much faster than local
+  // receive time. A sample cannot have been captured after it was received.
+  // Discard the invalid mapping rather than keeping the entire deque in the future.
+  if (mapped_time - local_time >= kFreshness) {
+    samples_.clear();
+    remote_anchor_ = remote_us;
+    local_anchor_ = local_time;
+    mapped_time = local_time;
+    recovered = true;
   }
   samples_.push_back({mapped_time, quaternion});
   if (samples_.size() > kMaxSamples) {
@@ -74,8 +84,10 @@ bool AhrsTimeline::MarkStale(Clock::time_point now)
   return true;
 }
 
-Eigen::Quaterniond AhrsTimeline::WaitAt(Clock::time_point requested)
+Eigen::Quaterniond AhrsTimeline::WaitAt(Clock::time_point requested, std::chrono::milliseconds timeout)
 {
+  const auto deadline = timeout == std::chrono::milliseconds::max() ?
+    Clock::time_point::max() : Clock::now() + timeout;
   std::unique_lock lock(mutex_);
   for (;;) {
     const auto now = now_provider_();
@@ -89,11 +101,14 @@ Eigen::Quaterniond AhrsTimeline::WaitAt(Clock::time_point requested)
     if (!stale_ && !expired && bracketed) {
       break;
     }
+    if (Clock::now() >= deadline) {
+      throw AhrsSampleUnavailable("AHRS query timed out");
+    }
     if (!stale_ && !expired && has_anchor_) {
       const auto remaining = kFreshness - (now - last_receive_);
-      changed_.wait_for(lock, remaining);
+      changed_.wait_until(lock, std::min(deadline, Clock::now() + remaining));
     } else {
-      changed_.wait(lock);
+      changed_.wait_until(lock, deadline);
     }
   }
 

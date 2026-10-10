@@ -28,7 +28,8 @@ public:
   bool SubmitWhenFresh(Clock::time_point now, const Submission & submission);
   void SubmitPassiveFalseFire();
   void WaitReady();
-  Eigen::Quaterniond WaitQuaternion(Clock::time_point requested);
+  Eigen::Quaterniond WaitQuaternion(Clock::time_point requested,
+    std::chrono::milliseconds timeout = std::chrono::milliseconds::max());
   [[nodiscard]] bool HasFreshAhrs(Clock::time_point now) const;
 
 private:

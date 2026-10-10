@@ -117,9 +117,9 @@ public:
 
   void WaitReady() { gate_.WaitReady(); }
 
-  Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested)
+  Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested, std::chrono::milliseconds timeout)
   {
-    return gate_.WaitQuaternion(requested);
+    return gate_.WaitQuaternion(requested, timeout);
   }
 
   RuntimeSnapshot Snapshot() const
@@ -418,9 +418,9 @@ void GimbalRuntime::SendPassiveFalseFire() { impl_->SendPassiveFalseFire(); }
 
 void GimbalRuntime::WaitReady() { impl_->WaitReady(); }
 
-Eigen::Quaterniond GimbalRuntime::WaitQuaternion(AhrsTimeline::Clock::time_point requested)
+Eigen::Quaterniond GimbalRuntime::WaitQuaternion(AhrsTimeline::Clock::time_point requested, std::chrono::milliseconds timeout)
 {
-  return impl_->WaitQuaternion(requested);
+  return impl_->WaitQuaternion(requested, timeout);
 }
 
 RuntimeSnapshot GimbalRuntime::Snapshot() const { return impl_->Snapshot(); }

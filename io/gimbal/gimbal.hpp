@@ -53,7 +53,7 @@ struct GimbalState
 class Gimbal
 {
 public:
-  Gimbal(const std::string & config_path);
+  Gimbal(const std::string & config_path, bool wait_ready = true);
   ~Gimbal() = default;
 
   GimbalRuntime & runtime() { return *runtime_; }

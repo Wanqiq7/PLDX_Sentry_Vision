@@ -140,5 +140,28 @@ int main()
 
   timeline.Reset();
   assert(!timeline.Fresh(t0 + 1s));
+
+  // Startup backlog: thirty seconds of remote history arrive within one millisecond.
+  // The mapping must recover instead of rejecting every current camera frame forever.
+  now = t0 + 1ms;
+  AhrsTimeline backlog([&] { return now; });
+  backlog.OnSample(1000, old_generation, t0);
+  assert(backlog.OnSample(30001000, new_generation, now) == SampleResult::RECOVERED);
+  backlog.OnSample(30002000, new_generation, t0 + 2ms);
+  assert(backlog.WaitAt(t0 + 1500us).angularDistance(new_generation) < 1e-12);
+
+  // Missing and stale streams must not freeze a bounded calibration query.
+  AhrsTimeline missing;
+  auto start = Clock::now();
+  bool timed_out = false;
+  try { missing.WaitAt(start, 20ms); }
+  catch (const io::AhrsSampleUnavailable &) { timed_out = true; }
+  assert(timed_out);
+  assert(Clock::now() - start < 500ms);
+  missing.OnSample(1, old_generation, Clock::now() - 1s);
+  timed_out = false;
+  try { missing.WaitAt(Clock::now(), 20ms); }
+  catch (const io::AhrsSampleUnavailable &) { timed_out = true; }
+  assert(timed_out);
   return 0;
 }

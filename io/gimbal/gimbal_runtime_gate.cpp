@@ -75,9 +75,9 @@ void GimbalRuntimeGate::WaitReady()
   ready_changed_.wait(lock, [this] { return ready_; });
 }
 
-Eigen::Quaterniond GimbalRuntimeGate::WaitQuaternion(Clock::time_point requested)
+Eigen::Quaterniond GimbalRuntimeGate::WaitQuaternion(Clock::time_point requested, std::chrono::milliseconds timeout)
 {
-  return timeline_.WaitAt(requested);
+  return timeline_.WaitAt(requested, timeout);
 }
 
 bool GimbalRuntimeGate::HasFreshAhrs(Clock::time_point now) const

@@ -63,7 +63,8 @@ public:
   void SendFire(bool fire);
   void SendPassiveFalseFire();
   void WaitReady();
-  Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested);
+  Eigen::Quaterniond WaitQuaternion(AhrsTimeline::Clock::time_point requested,
+    std::chrono::milliseconds timeout = std::chrono::milliseconds::max());
   [[nodiscard]] RuntimeSnapshot Snapshot() const;
   [[nodiscard]] bool HasFreshAhrs() const;
 

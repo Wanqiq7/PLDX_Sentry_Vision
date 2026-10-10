@@ -7,12 +7,12 @@
 
 namespace io
 {
-Gimbal::Gimbal(const std::string & config_path)
+Gimbal::Gimbal(const std::string & config_path, bool wait_ready)
 {
   const auto config = LoadGimbalConfig(config_path);
   runtime_ = std::shared_ptr<GimbalRuntime>(&GimbalRuntime::Instance(config), [](GimbalRuntime *) {});
   tools::logger()->info("[Gimbal] LibXR Topic transport; waiting for live gimbal feedback.");
-  runtime_->WaitReady();
+  if (wait_ready) runtime_->WaitReady();
 }
 
 GimbalMode Gimbal::mode() const

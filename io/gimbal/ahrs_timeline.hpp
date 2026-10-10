@@ -32,7 +32,8 @@ public:
 
   SampleResult OnSample(uint64_t remote_us, Eigen::Quaterniond quaternion, Clock::time_point local_time);
   bool MarkStale(Clock::time_point now);
-  Eigen::Quaterniond WaitAt(Clock::time_point requested);
+  Eigen::Quaterniond WaitAt(Clock::time_point requested,
+    std::chrono::milliseconds timeout = std::chrono::milliseconds::max());
   bool Fresh(Clock::time_point now) const;
   void Reset();
 

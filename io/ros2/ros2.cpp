@@ -13,9 +13,15 @@ ROS2::ROS2(int argc, char ** argv)
   subscribe_spin_thread_ = std::make_unique<std::thread>([this]() { subscribe2nav_->start(); });
 }
 
+void ROS2::AttachNavigation(GimbalRuntime & runtime, bool telemetry_only) {
+  navigation_bridge_ = std::make_shared<NavigationBridge>(runtime, telemetry_only);
+  navigation_thread_ = std::make_unique<std::thread>([this] { rclcpp::spin(navigation_bridge_); });
+}
+
 ROS2::~ROS2()
 {
   if (rclcpp::ok()) rclcpp::shutdown();
+  if (navigation_thread_ && navigation_thread_->joinable()) navigation_thread_->join();
   if (publish_spin_thread_ && publish_spin_thread_->joinable()) publish_spin_thread_->join();
   if (subscribe_spin_thread_ && subscribe_spin_thread_->joinable()) subscribe_spin_thread_->join();
 }

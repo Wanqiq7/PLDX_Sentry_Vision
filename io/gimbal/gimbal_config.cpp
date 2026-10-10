@@ -14,17 +14,39 @@ RuntimeConfig LoadGimbalConfig(const std::string & path)
 {
   try {
     const auto yaml = YAML::LoadFile(path);
-    if (!yaml["com_port"] || !yaml["com_port"].IsScalar()) {
-      throw std::invalid_argument("com_port is required");
+    RuntimeConfig config{};
+    const bool has_transport_selector = yaml["transport_vid"] || yaml["transport_pid"] ||
+      yaml["transport_control_interface"];
+    if (has_transport_selector) {
+      if (yaml["com_port"] || !yaml["transport_control_interface"] ||
+        !yaml["transport_control_interface"].IsScalar() ||
+        !yaml["transport_vid"] || !yaml["transport_vid"].IsScalar() ||
+        !yaml["transport_pid"] || !yaml["transport_pid"].IsScalar()) {
+        throw std::invalid_argument(
+          "transport selector fields are required together and cannot be combined with com_port");
+      }
+      config.transport_vid = yaml["transport_vid"].as<std::string>();
+      config.transport_pid = yaml["transport_pid"].as<std::string>();
+      config.transport_control_interface = yaml["transport_control_interface"].as<std::string>();
+      if (config.transport_vid.empty() || config.transport_pid.empty() ||
+        config.transport_control_interface.empty()) {
+        throw std::invalid_argument("transport selector values must not be empty");
+      }
+    } else {
+      if (!yaml["com_port"] || !yaml["com_port"].IsScalar()) {
+        throw std::invalid_argument("com_port or transport selector is required");
+      }
+      config.device = yaml["com_port"].as<std::string>();
+      const auto non_space = std::find_if(config.device.begin(), config.device.end(), [](unsigned char value) {
+        return std::isspace(value) == 0;
+      });
+      if (non_space == config.device.end()) {
+        throw std::invalid_argument("com_port must not be empty");
+      }
     }
-    const auto device = yaml["com_port"].as<std::string>();
-    const auto non_space = std::find_if(device.begin(), device.end(), [](unsigned char value) {
-      return std::isspace(value) == 0;
-    });
-    if (non_space == device.end()) {
-      throw std::invalid_argument("com_port must not be empty");
-    }
-    RuntimeConfig config{device, 921600, 1, 23.0};
+    config.baudrate = 921600;
+    config.default_mode = 1;
+    config.default_bullet_speed = 23.0;
     if (yaml["baudrate"]) {
       const auto baudrate = yaml["baudrate"].as<long long>();
       if (baudrate < 1 || baudrate > 4000000) {

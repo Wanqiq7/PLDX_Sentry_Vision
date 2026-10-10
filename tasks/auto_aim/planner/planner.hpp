@@ -5,6 +5,7 @@
 #include <list>
 #include <optional>
 
+#include "io/command.hpp"
 #include "tasks/auto_aim/target.hpp"
 #include "tinympc/tiny_api.hpp"
 
@@ -29,6 +30,8 @@ struct Plan
   float pitch_vel;
   float pitch_acc;
 };
+
+io::Command to_command(const Plan & plan);
 
 class Planner
 {

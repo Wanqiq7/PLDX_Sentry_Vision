@@ -17,3 +17,8 @@ records_25/
 build-serial/
 build-typed/
 .serena/
+
+# Local build outputs and reference checkout
+build-*/
+__pycache__/
+/PLDX_Template/

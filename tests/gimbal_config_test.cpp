@@ -37,6 +37,15 @@ int main()
   assert(defaults.default_bullet_speed == 23.0);
   assert(!defaults.transport_diagnostics_enabled);
 
+  write_fixture("gimbal_config_usb_selector.yaml",
+    "transport_vid: 16d0\ntransport_pid: 1492\n"
+    "transport_control_interface: XRUSB Vision Control\n");
+  const auto selector = io::LoadGimbalConfig("gimbal_config_usb_selector.yaml");
+  assert(selector.device.empty());
+  assert(selector.transport_vid == "16d0");
+  assert(selector.transport_pid == "1492");
+  assert(selector.transport_control_interface == "XRUSB Vision Control");
+
   write_fixture("gimbal_config_values.yaml",
     "com_port: /dev/test\nbaudrate: 115200\ndefault_mode: BIG_BUFF\ndefault_bullet_speed: 30.5\n");
   const auto values = io::LoadGimbalConfig("gimbal_config_values.yaml");
@@ -62,5 +71,10 @@ int main()
   rejects("gimbal_config_port_sequence.yaml", "com_port: [/dev/gimbal]\n");
   rejects("gimbal_config_port_empty.yaml", "com_port: \"\"\n");
   rejects("gimbal_config_port_whitespace.yaml", "com_port: \"   \\t  \"\n");
+  rejects("gimbal_config_selector_incomplete.yaml",
+    "transport_vid: 16d0\ntransport_pid: 1492\n");
+  rejects("gimbal_config_selector_mixed.yaml",
+    "com_port: /dev/test\ntransport_vid: 16d0\ntransport_pid: 1492\n"
+    "transport_control_interface: XRUSB Vision Control\n");
   return 0;
 }

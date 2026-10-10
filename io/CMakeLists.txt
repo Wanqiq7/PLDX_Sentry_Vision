@@ -10,7 +10,6 @@ add_library(io STATIC
     mindvision/mindvision.cpp  
     usbcamera/usbcamera.cpp  
     camera.cpp
-    cboard.cpp
     dm_imu/dm_imu.cpp
     gimbal/gimbal.cpp
     gimbal/gimbal_config.cpp
@@ -21,13 +20,22 @@ add_library(io STATIC
 )
 
 # hikrobot
-target_include_directories(io PUBLIC hikrobot/include)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-  target_link_directories(io PUBLIC hikrobot/lib/amd64)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-  target_link_directories(io PUBLIC hikrobot/lib/arm64)
+set(HIKROBOT_SDK_ROOT "/opt/MVS" CACHE PATH "Complete Hikrobot MVS SDK installation")
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" AND
+   EXISTS "${HIKROBOT_SDK_ROOT}/lib/64/libMvCameraControl.so")
+  target_include_directories(io PUBLIC "${HIKROBOT_SDK_ROOT}/include")
+  target_link_directories(io PUBLIC "${HIKROBOT_SDK_ROOT}/lib/64")
+  set(HIKROBOT_CONTROL_LIBRARY "${HIKROBOT_SDK_ROOT}/lib/64/libMvCameraControl.so")
 else()
-  message(FATAL_ERROR "Unsupported architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}!")
+  target_include_directories(io PUBLIC hikrobot/include)
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+    target_link_directories(io PUBLIC hikrobot/lib/amd64)
+  elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
+    target_link_directories(io PUBLIC hikrobot/lib/arm64)
+  else()
+    message(FATAL_ERROR "Unsupported architecture: ${CMAKE_HOST_SYSTEM_PROCESSOR}!")
+  endif()
+  set(HIKROBOT_CONTROL_LIBRARY MvCameraControl)
 endif()
 
 # mindvision
@@ -42,7 +50,7 @@ endif()
 
 # Keep this in the plain signature because ament_target_dependencies below
 # appends its ROS libraries using the plain target_link_libraries form.
-target_link_libraries(io xr udev MvCameraControl MVSDK usb-1.0 yaml-cpp serial)
+target_link_libraries(io xr udev ${HIKROBOT_CONTROL_LIBRARY} MVSDK usb-1.0 yaml-cpp serial)
 
 ################## 检查 ROS 环境 ##################
 find_package(ament_cmake QUIET)
@@ -54,13 +62,13 @@ find_package(sp_msgs QUIET)
 find_package(pldx_vision_interfaces QUIET)
 
 # 如果找不到 ROS 环境，则跳过 ROS 相关的部分
-if(NOT ament_cmake_FOUND OR NOT rclcpp_FOUND OR NOT std_msgs_FOUND OR NOT rosidl_typesupport_cpp_FOUND OR NOT pldx_vision_interfaces_FOUND)
-    message(STATUS "ROS2 or pldx_vision_interfaces not found, skipping ROS2 IO integration.")
+if(NOT BUILD_SENTRY)
+    message(STATUS "BUILD_SENTRY=OFF: ROS2 IO integration disabled.")
 else()
     message(STATUS "ROS2 environment found, compiling ROS2-related code.")
     
     # 添加 ROS2 相关的文件
-    target_sources(io PRIVATE ros2/publish2nav.cpp ros2/subscribe2nav.cpp ros2/ros2.cpp)
+    target_sources(io PRIVATE ros2/publish2nav.cpp ros2/subscribe2nav.cpp ros2/ros2.cpp ros2/navigation_bridge.cpp)
     if(sp_msgs_FOUND)
       target_compile_definitions(io PUBLIC IO_HAS_SP_MSGS=1)
     endif()
@@ -72,5 +80,9 @@ else()
     if(sp_msgs_FOUND)
       ament_target_dependencies(io sp_msgs)
     endif()
-    ament_target_dependencies(io pldx_vision_interfaces)
+    find_package(ros_interfaces REQUIRED)
+    find_package(geometry_msgs REQUIRED)
+    find_package(nav_msgs REQUIRED)
+    find_package(tf2_ros REQUIRED)
+    ament_target_dependencies(io pldx_vision_interfaces ros_interfaces geometry_msgs nav_msgs tf2_ros)
 endif()

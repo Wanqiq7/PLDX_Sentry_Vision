@@ -5,8 +5,7 @@
 
 namespace io
 {
-// Shared business enums used by the vision pipeline.  They are deliberately
-// independent of the legacy SocketCAN CBoard transport.
+// Shared business enums used by the vision pipeline.
 enum Mode
 {
   idle,
@@ -19,6 +18,8 @@ enum Mode
 inline const std::vector<std::string> MODES = {
   "idle", "auto_aim", "small_buff", "big_buff", "outpost"};
 
+// Kept for source compatibility with older vision modules.  Revision 2 does
+// not carry a launcher shoot-mode field on the gimbal feedback topic.
 enum ShootMode
 {
   left_shoot,
@@ -28,4 +29,5 @@ enum ShootMode
 
 inline const std::vector<std::string> SHOOT_MODES = {
   "left_shoot", "right_shoot", "both_shoot"};
+
 }  // namespace io

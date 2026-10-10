@@ -11,6 +11,7 @@
 #include "io/ros2/ros2.hpp"
 #include "io/usbcamera/usbcamera.hpp"
 #include "tasks/auto_aim/aimer.hpp"
+#include "tasks/auto_aim/planner/planner.hpp"
 #include "tasks/auto_aim/shooter.hpp"
 #include "tasks/auto_aim/solver.hpp"
 #include "tasks/auto_aim/tracker.hpp"
@@ -27,6 +28,7 @@ using namespace std::chrono;
 
 const std::string keys =
   "{help h usage ? |                        | 输出命令行参数说明}"
+  "{static-acceptance | false | 仅感知与反馈，禁止所有控制输出，跳过辅助相机 }"
   "{@config-path   | configs/sentry.yaml | 位置参数，yaml配置文件路径 }";
 
 int main(int argc, char * argv[])
@@ -42,17 +44,25 @@ int main(int argc, char * argv[])
   }
   auto config_path = cli.get<std::string>(0);
 
+  const bool static_acceptance = cli.get<bool>("static-acceptance");
   io::ROS2 ros2(argc, argv);
   io::Gimbal  gimbal(config_path);
+  ros2.AttachNavigation(gimbal.runtime(), static_acceptance);
   io::Camera camera(config_path);
-  io::Camera back_camera("configs/camera.yaml");
-  io::USBCamera usbcam1("video0", config_path);
-  io::USBCamera usbcam2("video2", config_path);
+  std::unique_ptr<io::Camera> back_camera;
+  std::unique_ptr<io::USBCamera> usbcam1, usbcam2;
+  if (!static_acceptance) {
+    back_camera = std::make_unique<io::Camera>("configs/camera.yaml");
+    usbcam1 = std::make_unique<io::USBCamera>("video0", config_path);
+    usbcam2 = std::make_unique<io::USBCamera>("video2", config_path);
+  }
+  if (static_acceptance) tools::logger()->warn("STATIC ACCEPTANCE: all control output disabled");
 
   auto_aim::YOLO yolo(config_path, false);
   auto_aim::Solver solver(config_path);
   auto_aim::Tracker tracker(config_path, solver);
   auto_aim::Aimer aimer(config_path);
+  auto_aim::Planner planner(config_path);
   auto_aim::Shooter shooter(config_path);
 
   omniperception::Decider decider(config_path);
@@ -87,15 +97,17 @@ int main(int argc, char * argv[])
     io::Command command{false, false, 0, 0};
 
     /// 全向感知逻辑
-    if (tracker.state() == "lost")
-      command = decider.decide(yolo, gimbal_pos, usbcam1, usbcam2, back_camera, directive);
-    else
-      command = aimer.aim(targets, timestamp,  gimbal.bullet_speed_value(),  gimbal.shoot_mode_value());
+    if (tracker.state() == "lost" && !static_acceptance)
+      command = decider.decide(yolo, gimbal_pos, *usbcam1, *usbcam2, *back_camera, directive);
+    else if (!targets.empty()) {
+      command = auto_aim::to_command(
+        planner.plan(std::optional<auto_aim::Target>{targets.front()}, gimbal.bullet_speed_value()));
+    }
 
     /// 发射逻辑
-    command.shoot = shooter.shoot(command, aimer, targets, gimbal_pos);
+    command.shoot = shooter.shoot(command, aimer, targets, gimbal_pos, tracker.state() == "lost");
 
-     gimbal.send(command);
+    if (!static_acceptance) gimbal.send(command);
 
     /// ROS2通信
     Eigen::Vector4d target_info =

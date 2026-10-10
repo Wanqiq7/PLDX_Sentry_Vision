@@ -3,6 +3,7 @@
 
 #include "publish2nav.hpp"
 #include "subscribe2nav.hpp"
+#include "navigation_bridge.hpp"
 
 namespace io
 {
@@ -12,6 +13,7 @@ public:
   ROS2(int argc, char ** argv);
 
   ~ROS2();
+  void AttachNavigation(GimbalRuntime & runtime, bool telemetry_only = false);
 
   bool publish(
     const Eigen::Vector4d & target_pos,
@@ -39,6 +41,8 @@ public:
   }
 
 private:
+  std::shared_ptr<NavigationBridge> navigation_bridge_;
+  std::unique_ptr<std::thread> navigation_thread_;
   std::shared_ptr<Publish2Nav> publish2nav_;
   std::shared_ptr<Subscribe2Nav> subscribe2nav_;
 

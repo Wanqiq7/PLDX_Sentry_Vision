@@ -44,6 +44,7 @@ int main(int argc, char * argv[])
 
   io::ROS2 ros2(argc, argv);
   io::Gimbal  gimbal(config_path);
+  ros2.AttachNavigation(gimbal.runtime());
   io::Camera camera(config_path);
   io::Camera back_camera("configs/camera.yaml");
   io::USBCamera usbcam1("video0", config_path);
@@ -90,7 +91,7 @@ int main(int argc, char * argv[])
     if (tracker.state() == "lost")
       command = decider.decide(yolo, gimbal_pos, usbcam1, usbcam2, back_camera, directive);
     else
-      command = aimer.aim(targets, timestamp,  gimbal.bullet_speed_value(),  gimbal.shoot_mode_value());
+      command = aimer.aim(targets, timestamp, gimbal.bullet_speed_value());
 
     /// 发射逻辑
     command.shoot = shooter.shoot(command, aimer, targets, gimbal_pos);
@@ -177,7 +178,6 @@ int main(int argc, char * argv[])
     // 云台响应情况
     data["gimbal_yaw"] = gimbal_pos[0] * 57.3;
     data["gimbal_pitch"] = -gimbal_pos[1] * 57.3;
-    data["shootmode"] =  gimbal.shoot_mode_value();
     if (command.control) {
       data["cmd_yaw"] = command.yaw * 57.3;
       data["cmd_pitch"] = command.pitch * 57.3;

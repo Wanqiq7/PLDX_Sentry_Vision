@@ -47,6 +47,7 @@ int main(int argc, char * argv[])
 
   io::ROS2 ros2(argc, argv);
   io::Gimbal  gimbal(config_path);
+  ros2.AttachNavigation(gimbal.runtime());
   io::Camera camera(config_path);
   io::USBCamera usbcam1("video0", config_path);
   io::USBCamera usbcam2("video2", config_path);

@@ -3,9 +3,11 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <mutex>
 #include <queue>
+#include <string>
 #include <thread>
 
 #include "tools/crc.hpp"
@@ -37,7 +39,14 @@ DM_IMU::~DM_IMU()
 void DM_IMU::init_serial()
 {
   try {
-    serial_.setPort("/dev/ttyACM0");
+    // Never probe ttyACM devices: the controller's USB HS composite exposes
+    // both protocol CDCs as ttyACM nodes.  Deployments with a USB-UART IMU
+    // may override this with XR_DM_IMU_DEVICE (prefer a /dev/serial/by-id
+    // path); the conservative default targets a separate USB-UART class.
+    const char * configured_device = std::getenv("XR_DM_IMU_DEVICE");
+    const std::string device = configured_device != nullptr && configured_device[0] != '\0' ?
+      configured_device : "/dev/ttyUSB0";
+    serial_.setPort(device);
     serial_.setBaudrate(921600);
     serial_.setFlowcontrol(serial::flowcontrol_none);
     serial_.setParity(serial::parity_none);  //default is parity_none

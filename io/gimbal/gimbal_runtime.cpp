@@ -10,6 +10,8 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include <map>
+#include "io/gimbal/navigation_protocol.hpp"
 
 #include "io/gimbal/gimbal_runtime_gate.hpp"
 #include "io/gimbal/outgoing_bridge.hpp"
@@ -25,13 +27,26 @@ using libxr_protocol::GimbalFeedbackPayload;
 using libxr_protocol::QuaternionPayload;
 using libxr_protocol::TargetEulerPayload;
 
+namespace
+{
+std::unique_ptr<LibXR::LinuxUART> OpenTransport(const RuntimeConfig & config)
+{
+  if (!config.transport_control_interface.empty()) {
+    return std::make_unique<LibXR::LinuxUART>(
+      config.transport_vid, config.transport_pid, config.transport_control_interface,
+      config.baudrate, LibXR::UART::Parity::NO_PARITY, 8, 1, 1, 512);
+  }
+  return std::make_unique<LibXR::LinuxUART>(
+    config.device.c_str(), config.baudrate, LibXR::UART::Parity::NO_PARITY, 8, 1, 1, 512);
+}
+}  // namespace
+
 class GimbalRuntime::Impl
 {
 public:
   explicit Impl(const RuntimeConfig & config)
   : config_(config),
-    uart_(std::make_unique<LibXR::LinuxUART>(
-      config.device.c_str(), config.baudrate, LibXR::UART::Parity::NO_PARITY, 8, 1, 1, 512)),
+    uart_(OpenTransport(config)),
     target_topic_(LibXR::Topic::CreateTopic<TargetEulerPayload>(libxr_protocol::TARGET_EULER_TOPIC)),
     fire_topic_(LibXR::Topic::CreateTopic<FirePayload>(libxr_protocol::FIRE_NOTIFY_TOPIC)),
     ahrs_topic_(LibXR::Topic::CreateTopic<QuaternionPayload>(libxr_protocol::AHRS_QUATERNION_TOPIC)),
@@ -67,6 +82,15 @@ public:
     server_.Register(ahrs_topic_);
     server_.Register(feedback_topic_);
 
+    using namespace navigation_protocol;
+    AddNavigationTopic<ChassisTarget>("nav_data", false);
+    AddNavigationTopic<BehaviorData>("behavior_data", false);
+    AddNavigationTopic<TeamInfo>("team_info", true);
+    AddNavigationTopic<GameInfo>("game_info", true);
+    AddNavigationTopic<SentryInfoOnline>("online_info", true);
+    AddNavigationTopic<SentryInfoOffline>("offline_info", true);
+    AddNavigationTopic<RadarInfo>("radar_info", true);
+    AddNavigationTopic<LinkDiagnostics>("nav_link_diagnostics", true);
     rx_thread_ = std::thread(&Impl::ReceiveLoop, this);
     tx_thread_ = std::thread(&Impl::TransmitLoop, this);
     stale_thread_ = std::thread(&Impl::StaleLoop, this);
@@ -105,14 +129,18 @@ public:
       AhrsTimeline::Clock::now() - feedback_received_ <= kFeedbackTimeout;
     const auto flags = fresh ? feedback_.valid_flags : static_cast<uint8_t>(0);
     return {config_.default_mode, config_.default_bullet_speed, HasFreshAhrs(),
+      (flags & libxr_protocol::FEEDBACK_YAW_VALID) != 0U ? feedback_.yaw : 0.0F,
+      (flags & libxr_protocol::FEEDBACK_ANGULAR_VELOCITY_VALID) != 0U ? feedback_.yaw_velocity : 0.0F,
+      (flags & libxr_protocol::FEEDBACK_PITCH_VALID) != 0U ? feedback_.pitch : 0.0F,
+      (flags & libxr_protocol::FEEDBACK_ANGULAR_VELOCITY_VALID) != 0U ? feedback_.pitch_velocity : 0.0F,
       (flags & libxr_protocol::FEEDBACK_BULLET_SPEED_VALID) != 0U ?
         feedback_.bullet_speed : 0.0F,
       (flags & libxr_protocol::FEEDBACK_BULLET_COUNT_VALID) != 0U ?
         feedback_.bullet_count : static_cast<uint16_t>(0),
       (flags & libxr_protocol::FEEDBACK_GIMBAL_MODE_VALID) != 0U ?
         feedback_.gimbal_mode : static_cast<uint8_t>(0),
-      (flags & libxr_protocol::FEEDBACK_SHOOT_MODE_VALID) != 0U ?
-        feedback_.shoot_mode : static_cast<uint8_t>(0),
+      (flags & libxr_protocol::FEEDBACK_VISION_TASK_VALID) != 0U ?
+        feedback_.vision_task : static_cast<uint8_t>(0),
       flags, fresh, diagnostics_.rx_topic_updates.load(), diagnostics_.rx_bytes.load(),
       diagnostics_.tx_publish_requests.load(), diagnostics_.tx_pack_failures.load(),
       diagnostics_.rx_invalid_payload_failures.load(), diagnostics_.read_failures.load(),
@@ -121,7 +149,39 @@ public:
 
   bool HasFreshAhrs() const { return gate_.HasFreshAhrs(AhrsTimeline::Clock::now()); }
 
+public:
+  void SendNavigation(const std::string & name, std::span<const uint8_t> payload) {
+    auto found = navigation_topics_.find(name);
+    if (found == navigation_topics_.end() || (name != "nav_data" && name != "behavior_data")) return;
+    std::vector<uint8_t> packet(payload.size() + LibXR::Topic::PACK_BASE_SIZE);
+    if (found->second.PackRaw(LibXR::ConstRawData(payload.data(), payload.size()),
+        LibXR::RawData(packet.data(), packet.size())) != LibXR::ErrorCode::OK) {
+      diagnostics_.tx_pack_failures.fetch_add(1); return;
+    }
+    std::lock_guard lock(navigation_mutex_);
+    navigation_pending_[name] = std::move(packet);
+    diagnostics_.tx_publish_requests.fetch_add(1);
+  }
+  void SetNavigationReceiver(std::function<void(const std::string &, std::span<const uint8_t>)> receiver) {
+    std::lock_guard lock(navigation_mutex_); navigation_receiver_ = std::move(receiver);
+  }
 private:
+  template<class Payload> void AddNavigationTopic(const char * name, bool receive) {
+    auto [it, inserted] = navigation_topics_.emplace(name, LibXR::Topic::CreateTopic<Payload>(name));
+    static_cast<void>(inserted);
+    if (!receive) return;
+    auto callback = LibXR::Topic::Callback::Create(
+      [](bool, std::pair<Impl *, std::string> context, const LibXR::Topic::RawMessageView & message) {
+        auto * self = context.first;
+        if (!message.payload.addr_ || message.payload.size_ != sizeof(Payload)) {
+          self->diagnostics_.rx_invalid_payload_failures.fetch_add(1); return;
+        }
+        std::lock_guard lock(self->navigation_mutex_);
+        if (self->navigation_receiver_) self->navigation_receiver_(context.second, {static_cast<const uint8_t *>(message.payload.addr_), message.payload.size_});
+      }, std::pair<Impl *, std::string>{this, name});
+    it->second.RegisterCallback(callback);
+    server_.Register(it->second);
+  }
   void QueuePacket(
     TopicKind kind, LibXR::Topic::TopicHandle topic_handle,
     const LibXR::Topic::RawMessageView & message)
@@ -184,15 +244,22 @@ private:
       (sample.valid_flags & libxr_protocol::FEEDBACK_BULLET_SPEED_VALID) != 0U;
     const auto mode_valid =
       (sample.valid_flags & libxr_protocol::FEEDBACK_GIMBAL_MODE_VALID) != 0U;
-    const auto shoot_mode_valid =
-      (sample.valid_flags & libxr_protocol::FEEDBACK_SHOOT_MODE_VALID) != 0U;
+    const auto task_valid =
+      (sample.valid_flags & libxr_protocol::FEEDBACK_VISION_TASK_VALID) != 0U;
+    const auto yaw_valid = (sample.valid_flags & libxr_protocol::FEEDBACK_YAW_VALID) != 0U;
+    const auto pitch_valid = (sample.valid_flags & libxr_protocol::FEEDBACK_PITCH_VALID) != 0U;
+    const auto velocity_valid =
+      (sample.valid_flags & libxr_protocol::FEEDBACK_ANGULAR_VELOCITY_VALID) != 0U;
     const auto reserved_zero =
       sample.reserved[0] == 0U && sample.reserved[1] == 0U && sample.reserved[2] == 0U;
     if (invalid_flags != 0U || !reserved_zero ||
       (speed_valid && (!std::isfinite(sample.bullet_speed) || sample.bullet_speed < 0.0F ||
         sample.bullet_speed > 100.0F)) ||
-      (mode_valid && sample.gimbal_mode > 3U) ||
-      (shoot_mode_valid && sample.shoot_mode > 2U)) {
+      (yaw_valid && !std::isfinite(sample.yaw)) ||
+      (pitch_valid && !std::isfinite(sample.pitch)) ||
+      (velocity_valid && (!std::isfinite(sample.yaw_velocity) ||
+        !std::isfinite(sample.pitch_velocity))) ||
+      (mode_valid && sample.gimbal_mode > 3U) || (task_valid && sample.vision_task > 3U)) {
       diagnostics_.rx_invalid_payload_failures.fetch_add(1);
       tools::logger()->warn("[GimbalRuntime] Rejected invalid gimbal feedback");
       return;
@@ -249,6 +316,14 @@ private:
     for (;;) {
       auto packet = outgoing_.BeginNext();
       if (!packet) {
+        std::vector<uint8_t> nav;
+        { std::lock_guard lock(navigation_mutex_);
+          if (!navigation_pending_.empty()) { auto it = navigation_pending_.begin(); nav = std::move(it->second); navigation_pending_.erase(it); }
+        }
+        if (!nav.empty()) {
+          if ((*uart_->write_port_)(LibXR::ConstRawData(nav.data(), nav.size()), write_op) != LibXR::ErrorCode::OK) diagnostics_.write_failures.fetch_add(1);
+          continue;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         continue;
       }
@@ -282,6 +357,10 @@ private:
     }
   }
 
+  std::map<std::string, LibXR::Topic> navigation_topics_;
+  std::map<std::string, std::vector<uint8_t>> navigation_pending_;
+  std::mutex navigation_mutex_;
+  std::function<void(const std::string &, std::span<const uint8_t>)> navigation_receiver_;
   const RuntimeConfig config_;
   std::unique_ptr<LibXR::LinuxUART> uart_;
   LibXR::Topic target_topic_;
@@ -327,6 +406,9 @@ GimbalRuntime & GimbalRuntime::Instance(const RuntimeConfig & config)
 GimbalRuntime::GimbalRuntime(const RuntimeConfig & config) : impl_(std::make_unique<Impl>(config)) {}
 
 GimbalRuntime::~GimbalRuntime() = default;
+
+void GimbalRuntime::SendNavigation(const std::string & topic, std::span<const uint8_t> payload) { impl_->SendNavigation(topic, payload); }
+void GimbalRuntime::SetNavigationReceiver(std::function<void(const std::string &, std::span<const uint8_t>)> receiver) { impl_->SetNavigationReceiver(std::move(receiver)); }
 
 void GimbalRuntime::SendTarget(const TargetEulerPayload & target) { impl_->SendTarget(target); }
 
